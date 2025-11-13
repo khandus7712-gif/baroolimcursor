@@ -208,7 +208,7 @@ export default function PricingPage() {
                       if (plan.id === 'free') {
                         router.push('/studio');
                       } else if (plan.id === 'enterprise') {
-                        window.location.href = 'mailto:support@baroolim.com';
+                        window.location.href = 'mailto:pernar.go@gmail.com';
                       } else {
                         alert('결제 시스템 준비 중입니다!');
                       }

@@ -247,7 +247,7 @@ function generateEmailHTML(data: NotificationData, formattedTime?: string): stri
 
         <div class="footer">
           <p style="margin: 5px 0;">
-            © 2024 바로올림 | Made with ❤️ by 퍼나르
+            © 2025 바로올림 | Made with ❤️ by 퍼나르
           </p>
           <p style="margin: 5px 0; font-size: 12px;">
             이 메일은 예약 발행 알림입니다. 예약을 취소하려면 

@@ -40,6 +40,10 @@ next-env.d.ts
 /prisma/*.db
 /prisma/*.db-journal
 
+# large files
+*.zip
+*.tar.gz
+
 # playwright
 /test-results/
 /playwright-report/

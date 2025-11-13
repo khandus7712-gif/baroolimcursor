@@ -1,0 +1,154 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 구독 플랜 타입
+enum SubscriptionPlan {
+  FREE        // 평생 5회
+  BASIC       // 29,900원 - 하루 3개
+  PRO         // 49,900원 - 하루 10개
+  ENTERPRISE  // 79,900원 - 하루 30개
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  
+  // 구독 정보
+  plan      SubscriptionPlan @default(FREE)
+  planExpiry DateTime?  // 구독 만료일 (null이면 영구)
+  
+  // 생성 횟수 추적
+  totalGenerations Int @default(0)  // FREE 플랜용 (평생 5회 제한)
+  dailyGenerationCount Int @default(0)  // 유료 플랜용 (일일 제한)
+  lastGenerationDate DateTime?  // 마지막 생성 날짜 (일일 카운트 리셋용)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  brands      Brand[]
+  generations Generation[]
+  scheduledPosts ScheduledPost[]
+}
+
+model Brand {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  domainId  String   // food, beauty, retail 등
+  config    Json     // DomainConfig (도메인별 설정)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([domainId])
+}
+
+model DomainConfig {
+  id        String   @id @default(cuid())
+  domainId  String   @unique // food, beauty, retail
+  config    Json     // DomainProfile JSON
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([domainId])
+}
+
+model PlatformConfig {
+  id        String   @id @default(cuid())
+  platformId String @unique // instagram, blog, threads, gmb
+  config    Json     // PlatformTemplate JSON
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([platformId])
+}
+
+model CatalogItem {
+  id          String   @id @default(cuid())
+  type        String   // domain, platform, plugin
+  itemId      String   // 도메인/플랫폼/플러그인 ID
+  name        String
+  description String?
+  metadata    Json?    // 추가 메타데이터
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([type, itemId])
+  @@index([type, itemId])
+  @@index([isActive])
+}
+
+model Generation {
+  id          String   @id @default(cuid())
+  userId      String
+  brandId     String?
+  domainId    String
+  platformIds String[] // 플랫폼 ID 배열
+  input       Json     // 입력 데이터 (이미지 URL, 메모 등)
+  output      Json     // 출력 데이터 (생성된 콘텐츠)
+  metadata    Json?    // 추가 메타데이터 (플러그인 정보, 설정 등)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([domainId])
+  @@index([createdAt])
+}
+
+// 예약 발행 상태
+enum ScheduledPostStatus {
+  PENDING    // 대기 중
+  NOTIFIED   // 알림 발송됨
+  PUBLISHED  // 발행 완료
+  CANCELLED  // 취소됨
+}
+
+// 예약된 포스트
+model ScheduledPost {
+  id          String   @id @default(cuid())
+  userId      String
+  
+  // 콘텐츠 정보
+  domainId    String
+  platformIds String[]  // 발행할 플랫폼들
+  content     Json      // 생성된 콘텐츠 (플랫폼별)
+  imageUrl    String?   // 이미지 URL
+  
+  // 예약 정보
+  scheduledFor DateTime  // 발행 예정 시간
+  status       ScheduledPostStatus @default(PENDING)
+  memo         String?   // 사용자 메모
+  
+  // 알림 설정
+  notifyBefore Int @default(10)  // 몇 분 전에 알림 (기본 10분)
+  notifiedAt   DateTime?  // 알림 발송 시간
+  
+  // 발행 정보
+  publishedAt  DateTime?  // 실제 발행 시간
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([scheduledFor])
+  @@index([status])
+  @@index([scheduledFor, status])  // 복합 인덱스 (Cron Job용)
+}

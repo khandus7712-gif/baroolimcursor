@@ -48,7 +48,7 @@ export async function sendEmailNotification(
 
     // 이메일 발송
     await resend.emails.send({
-      from: 'no-reply@baroolim.com',
+      from: 'onboarding@resend.dev',  // Resend 기본 도메인 (즉시 사용 가능)
       to: email,
       subject: `🔔 [바로올림] 오늘 ${formattedTime}에 콘텐츠 발행 예정이에요!`,
       html: generateEmailHTML(data, formattedTime),

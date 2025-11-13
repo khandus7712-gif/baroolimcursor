@@ -405,8 +405,8 @@ export default function HomePage() {
               <ul className="space-y-2 text-sm text-white/60">
                 <li>
                   이메일:<br />
-                  <a href="mailto:support@baroolim.com" className="hover:text-white transition-colors">
-                    support@baroolim.com
+                  <a href="mailto:pernar.go@gmail.com" className="hover:text-white transition-colors">
+                    pernar.go@gmail.com
                   </a>
                 </li>
                 <li>
@@ -442,12 +442,12 @@ export default function HomePage() {
 
           {/* 저작권 */}
           <div className="text-center text-white/60">
-            <p className="text-base mb-2">© 2024 바로올림 | AI 마케팅 콘텐츠 생성 플랫폼</p>
+            <p className="text-base mb-2">© 2025 바로올림 | AI 마케팅 콘텐츠 생성 플랫폼</p>
             <p className="text-sm">Made with ❤️ by Baroolim Team</p>
             <p className="text-xs mt-4 text-white/40">
               대표: 이주연 | 사업자등록번호: 308-32-01281<br />
               경남 창원시 의창구 도계동 352-12 203호<br />
-              전화: 010-5850-1255 | 이메일: support@baroolim.com
+              전화: 010-5850-1255 | 이메일: pernar.go@gmail.com
             </p>
           </div>
         </div>

@@ -1,6 +1,9 @@
 /**
  * 알림 시스템 유틸리티
+ * Resend 이메일 서비스 사용
  */
+
+import { Resend } from 'resend';
 
 interface NotificationData {
   scheduledPostId: string;
@@ -10,42 +13,51 @@ interface NotificationData {
   notifyBefore: number;
 }
 
+// Resend 초기화
+const resend = process.env.RESEND_API_KEY 
+  ? new Resend(process.env.RESEND_API_KEY)
+  : null;
+
 /**
- * 이메일 알림 발송
- * TODO: 실제 이메일 서비스(SendGrid, AWS SES 등) 연동 필요
+ * 이메일 알림 발송 (Resend 사용)
  */
 export async function sendEmailNotification(
   email: string,
   data: NotificationData
 ): Promise<boolean> {
   try {
-    console.log('📧 이메일 알림 발송:', {
-      to: email,
-      scheduledPostId: data.scheduledPostId,
-      scheduledFor: data.scheduledFor,
-      memo: data.memo,
+    // API 키가 없으면 개발 모드 (콘솔만 출력)
+    if (!resend) {
+      console.log('📧 [DEV] 이메일 알림 발송:', {
+        to: email,
+        scheduledPostId: data.scheduledPostId,
+        scheduledFor: data.scheduledFor,
+        memo: data.memo,
+      });
+      return true;
+    }
+
+    const scheduledTime = new Date(data.scheduledFor);
+    const formattedTime = scheduledTime.toLocaleString('ko-KR', {
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
     });
 
-    // TODO: 실제 이메일 발송 로직
-    // 예시: SendGrid
-    /*
-    const sgMail = require('@sendgrid/mail');
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
-    const msg = {
-      to: email,
+    // 이메일 발송
+    await resend.emails.send({
       from: 'no-reply@baroolim.com',
-      subject: `🔔 ${data.notifyBefore}분 후 콘텐츠 발행 시간이에요!`,
-      html: generateEmailHTML(data),
-    };
+      to: email,
+      subject: `🔔 [바로올림] 오늘 ${formattedTime}에 콘텐츠 발행 예정이에요!`,
+      html: generateEmailHTML(data, formattedTime),
+    });
 
-    await sgMail.send(msg);
-    */
-
-    // 현재는 콘솔 로그만 출력 (개발 환경)
+    console.log('✅ 이메일 발송 성공:', email);
     return true;
   } catch (error) {
-    console.error('이메일 발송 실패:', error);
+    console.error('❌ 이메일 발송 실패:', error);
     return false;
   }
 }
@@ -104,8 +116,8 @@ export async function sendPushNotification(
 /**
  * 이메일 HTML 템플릿 생성
  */
-function generateEmailHTML(data: NotificationData): string {
-  const scheduledTime = new Date(data.scheduledFor).toLocaleString('ko-KR', {
+function generateEmailHTML(data: NotificationData, formattedTime?: string): string {
+  const scheduledTime = formattedTime || new Date(data.scheduledFor).toLocaleString('ko-KR', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -197,7 +209,7 @@ function generateEmailHTML(data: NotificationData): string {
         
         <div class="content">
           <p style="font-size: 16px; line-height: 1.6; color: #374151;">
-            안녕하세요! 사장님이 예약하신 콘텐츠의 발행 시간이 <strong>${data.notifyBefore}분 후</strong>입니다.
+            안녕하세요! 사장님이 예약하신 콘텐츠의 발행 시간이 다가왔습니다.
           </p>
 
           <div class="time-box">

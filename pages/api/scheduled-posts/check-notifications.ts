@@ -2,7 +2,8 @@
  * 알림 체크 API (Cron Job용)
  * GET /api/scheduled-posts/check-notifications
  * 
- * Vercel Cron으로 1분마다 호출됨
+ * Vercel Cron으로 매일 오전 9시에 호출됨
+ * "오늘" 발행 예정인 모든 포스트에 대해 알림 발송
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
@@ -21,21 +22,36 @@ export default async function handler(
 
   try {
     const now = new Date();
+    
+    // 오늘 00:00:00
+    const startOfToday = new Date(now);
+    startOfToday.setHours(0, 0, 0, 0);
+    
+    // 내일 00:00:00
+    const startOfTomorrow = new Date(startOfToday);
+    startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
 
-    // 알림을 보내야 하는 예약들 찾기
-    // 1. status가 PENDING
-    // 2. scheduledFor - notifyBefore 분이 현재 시간보다 이전
+    console.log(`🔍 오늘 예약 확인: ${startOfToday.toISOString()} ~ ${startOfTomorrow.toISOString()}`);
+
+    // 오늘 발행 예정인 모든 포스트 찾기
+    // 1. status가 PENDING (아직 알림 발송 안 됨)
+    // 2. scheduledFor가 오늘 범위 내
     const scheduledPosts = await prisma.scheduledPost.findMany({
       where: {
         status: 'PENDING',
+        scheduledFor: {
+          gte: startOfToday,
+          lt: startOfTomorrow,
+        },
+      },
+      orderBy: {
+        scheduledFor: 'asc',
       },
     });
 
-    const postsToNotify = scheduledPosts.filter((post) => {
-      const notifyTime = new Date(post.scheduledFor);
-      notifyTime.setMinutes(notifyTime.getMinutes() - post.notifyBefore);
-      return notifyTime <= now;
-    });
+    console.log(`📋 오늘 예약 포스트 ${scheduledPosts.length}개 발견`);
+
+    const postsToNotify = scheduledPosts;
 
     // 알림 보내기
     const notifiedIds: string[] = [];

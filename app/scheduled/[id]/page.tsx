@@ -6,6 +6,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { 
   ArrowLeft,
   Copy,
@@ -40,6 +41,7 @@ const PLATFORM_INFO: Record<string, { name: string; icon: any; color: string }> 
 export default function ScheduledPostDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const { data: session, status } = useSession();
   const id = params?.id as string;
 
   const [post, setPost] = useState<ScheduledPost | null>(null);
@@ -47,18 +49,25 @@ export default function ScheduledPostDetailPage() {
   const [error, setError] = useState('');
   const [copiedPlatform, setCopiedPlatform] = useState<string | null>(null);
 
+  // 로그인 체크
   useEffect(() => {
-    if (id) {
+    if (status === 'unauthenticated') {
+      router.push('/login?callbackUrl=/scheduled');
+    }
+  }, [status, router]);
+
+  useEffect(() => {
+    if (id && session?.user?.id) {
       fetchPost();
     }
-  }, [id]);
+  }, [id, session]);
 
   const fetchPost = async () => {
+    if (!session?.user?.id) return;
+    
     try {
       setLoading(true);
-      // 임시 userId
-      const userId = 'demo-user-1';
-      const res = await fetch(`/api/scheduled-posts/list?userId=${userId}`);
+      const res = await fetch(`/api/scheduled-posts/list?userId=${session.user.id}`);
       const data = await res.json();
 
       if (data.success) {

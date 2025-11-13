@@ -45,7 +45,7 @@ export default function HomePage() {
               📅 예약 관리
             </button>
             <button
-              onClick={() => router.push('/studio')}
+              onClick={() => router.push('/login')}
               className="text-white/80 hover:text-white transition-colors px-4 py-2 font-medium"
             >
               로그인

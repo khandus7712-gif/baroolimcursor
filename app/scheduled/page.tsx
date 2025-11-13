@@ -6,6 +6,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { 
   Calendar, 
   Clock, 
@@ -36,22 +37,31 @@ interface ScheduledPost {
 
 export default function ScheduledPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
   const [groupedPosts, setGroupedPosts] = useState<Record<string, ScheduledPost[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // 임시 userId (실제로는 인증 시스템에서 가져와야 함)
-  const userId = 'demo-user-1';
+  // 로그인 체크
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login?callbackUrl=/scheduled');
+    }
+  }, [status, router]);
 
   useEffect(() => {
-    fetchScheduledPosts();
-  }, []);
+    if (session?.user?.id) {
+      fetchScheduledPosts();
+    }
+  }, [session]);
 
   const fetchScheduledPosts = async () => {
+    if (!session?.user?.id) return;
+    
     try {
       setLoading(true);
-      const res = await fetch(`/api/scheduled-posts/list?userId=${userId}`);
+      const res = await fetch(`/api/scheduled-posts/list?userId=${session.user.id}`);
       const data = await res.json();
 
       if (data.success) {

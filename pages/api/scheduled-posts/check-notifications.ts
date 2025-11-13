@@ -54,7 +54,7 @@ export default async function handler(
       try {
         const results = await sendNotification(
           user.id,
-          user.email,
+          user.email || '',
           null, // TODO: 사용자 전화번호 (User 모델에 추가 필요)
           {
             scheduledPostId: post.id,

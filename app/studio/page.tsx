@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { 
   Upload, ArrowLeft, Copy, RefreshCw, Edit3, Check, X, 
   Loader2, Image as ImageIcon, Sparkles, AlertCircle,
@@ -43,6 +44,14 @@ interface GenerateResult {
 export default function StudioPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session, status } = useSession();
+  
+  // 로그인 체크
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login?callbackUrl=/studio');
+    }
+  }, [status, router]);
   
   // State
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -116,9 +125,14 @@ export default function StudioPage() {
       return;
     }
 
+    if (!session?.user?.id) {
+      alert('로그인이 필요합니다.');
+      router.push('/login');
+      return;
+    }
+
     try {
-      // 임시 userId (실제로는 인증 시스템에서 가져와야 함)
-      const userId = 'demo-user-1';
+      const userId = session.user.id;
 
       const res = await fetch('/api/scheduled-posts/create', {
         method: 'POST',

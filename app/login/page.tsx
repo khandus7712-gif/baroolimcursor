@@ -48,6 +48,11 @@ export default function LoginPage() {
     await signIn('google', { callbackUrl });
   };
 
+  const handleKakaoSignIn = async () => {
+    setIsLoading(true);
+    await signIn('kakao', { callbackUrl });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-900 flex items-center justify-center px-6">
       <div className="max-w-md w-full">
@@ -100,6 +105,21 @@ export default function LoginPage() {
               />
             </svg>
             Google로 시작하기
+          </button>
+
+          {/* Kakao 로그인 */}
+          <button
+            onClick={handleKakaoSignIn}
+            disabled={isLoading}
+            className="w-full flex items-center justify-center gap-3 bg-[#FEE500] text-[#000000]/85 px-6 py-4 rounded-xl font-bold hover:bg-[#FDD835] transition-all disabled:opacity-50 disabled:cursor-not-allowed mb-4"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <path
+                fill="currentColor"
+                d="M12 3C6.5 3 2 6.58 2 11c0 2.78 1.78 5.22 4.47 6.65-.2.7-.8 2.99-.92 3.46-.13.54.2.53.42.39.17-.11 2.75-1.85 3.18-2.19C10.38 19.63 11.18 19 12 19c5.5 0 10-3.58 10-8s-4.5-8-10-8z"
+              />
+            </svg>
+            카카오톡으로 시작하기
           </button>
 
           {/* 구분선 */}

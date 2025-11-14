@@ -6,10 +6,13 @@
 
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { Sparkles, Mail, Lock, ArrowRight } from 'lucide-react';
 
-export default function LoginPage() {
+// 동적 렌더링 강제 (useSearchParams 사용)
+export const dynamic = 'force-dynamic';
+
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
@@ -210,6 +213,18 @@ export default function LoginPage() {
         </button>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-900 flex items-center justify-center">
+        <div className="text-white">로딩 중...</div>
+      </div>
+    }>
+      <LoginPageContent />
+    </Suspense>
   );
 }
 

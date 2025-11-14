@@ -7,15 +7,17 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { useSession, signOut } from 'next-auth/react';
 import { 
   Smartphone, MessageCircle, Camera, Sparkles, ArrowRight, 
   Zap, Clock, TrendingUp, Users, Check, PlayCircle,
-  Instagram, Globe, Hash, Star, X
+  Instagram, Globe, Hash, Star, X, LogOut, User
 } from 'lucide-react';
 
 export default function HomePage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     setMounted(true);
@@ -44,12 +46,37 @@ export default function HomePage() {
             >
               📅 예약 관리
             </button>
-            <button
-              onClick={() => router.push('/login')}
-              className="text-white/80 hover:text-white transition-colors px-4 py-2 font-medium"
-            >
-              로그인
-            </button>
+            
+            {/* 로그인 상태에 따른 조건부 렌더링 */}
+            {status === 'loading' ? (
+              <div className="text-white/60 px-4 py-2 font-medium">...</div>
+            ) : session ? (
+              <>
+                {/* 로그인된 경우 */}
+                <div className="flex items-center gap-2 text-white/90 px-4 py-2 font-medium">
+                  <User className="w-4 h-4" />
+                  <span>{session.user?.name || session.user?.email?.split('@')[0]}</span>
+                </div>
+                <button
+                  onClick={() => signOut({ callbackUrl: '/' })}
+                  className="flex items-center gap-2 text-white/80 hover:text-white transition-colors px-4 py-2 font-medium"
+                >
+                  <LogOut className="w-4 h-4" />
+                  로그아웃
+                </button>
+              </>
+            ) : (
+              <>
+                {/* 로그인 안 된 경우 */}
+                <button
+                  onClick={() => router.push('/login')}
+                  className="text-white/80 hover:text-white transition-colors px-4 py-2 font-medium"
+                >
+                  로그인
+                </button>
+              </>
+            )}
+            
             <button 
               onClick={() => router.push('/studio')}
               className="bg-gradient-to-r from-brand-neon-purple to-brand-neon-pink px-6 py-2 rounded-full font-bold text-white hover:shadow-lg hover:shadow-brand-neon-purple/50 transition-all hover:scale-105"

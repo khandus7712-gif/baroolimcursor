@@ -45,12 +45,24 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
-    await signIn('google', { callbackUrl });
+    setError('');
+    try {
+      await signIn('google', { callbackUrl });
+    } catch (err) {
+      setError('Google 로그인 중 오류가 발생했습니다.');
+      setIsLoading(false);
+    }
   };
 
   const handleKakaoSignIn = async () => {
     setIsLoading(true);
-    await signIn('kakao', { callbackUrl });
+    setError('');
+    try {
+      await signIn('kakao', { callbackUrl });
+    } catch (err) {
+      setError('카카오 로그인 중 오류가 발생했습니다.');
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -77,6 +89,13 @@ export default function LoginPage() {
           {error && (
             <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-xl text-red-200 text-sm">
               {error}
+            </div>
+          )}
+
+          {isLoading && (
+            <div className="mb-6 p-4 bg-brand-neon-purple/20 border border-brand-neon-purple/50 rounded-xl text-brand-neon-purple text-sm flex items-center gap-2">
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-brand-neon-purple border-t-transparent"></div>
+              로그인 중... 잠시만 기다려주세요
             </div>
           )}
 

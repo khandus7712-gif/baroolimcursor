@@ -21,6 +21,14 @@ export const authOptions: NextAuthOptions = {
     KakaoProvider({
       clientId: process.env.KAKAO_CLIENT_ID || '',
       clientSecret: process.env.KAKAO_CLIENT_SECRET || '',
+      profile(profile) {
+        return {
+          id: String(profile.id),
+          name: profile.kakao_account?.profile?.nickname || profile.properties?.nickname,
+          email: profile.kakao_account?.email || `kakao_${profile.id}@kakao.local`,
+          image: profile.kakao_account?.profile?.profile_image_url || profile.properties?.profile_image,
+        };
+      },
     }),
     // 이메일/비밀번호 로그인 (간단한 버전)
     CredentialsProvider({
@@ -92,6 +100,9 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30일
   },
+  // 같은 이메일로 다른 Provider 사용 허용 (개발/테스트용)
+  // 주의: 프로덕션에서는 이메일 검증 후 사용 권장
+  allowDangerousEmailAccountLinking: true,
   debug: process.env.NODE_ENV === 'development',
 };
 

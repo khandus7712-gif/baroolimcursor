@@ -100,9 +100,6 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30일
   },
-  // 같은 이메일로 다른 Provider 사용 허용 (개발/테스트용)
-  // 주의: 프로덕션에서는 이메일 검증 후 사용 권장
-  allowDangerousEmailAccountLinking: true,
   debug: process.env.NODE_ENV === 'development',
 };
 

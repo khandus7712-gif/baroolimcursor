@@ -12,7 +12,7 @@ import {
   Users, TrendingUp, DollarSign, FileText, Calendar,
   Search, Filter, Download, RefreshCw, Eye, Mail,
   Phone, Building2, Clock, Check, X, Sparkles,
-  BarChart3, PieChart, Activity
+  BarChart3, PieChart, Activity, User
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';

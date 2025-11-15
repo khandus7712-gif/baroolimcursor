@@ -110,7 +110,7 @@ export default function PaymentPage() {
         orderId,
         orderName,
         customerName: session.user.name || session.user.email || '고객',
-        customerEmail: session.user.email,
+        customerEmail: session.user.email ?? undefined,
         successUrl: `${window.location.origin}/payment/success`,
         failUrl: `${window.location.origin}/payment/fail`,
       });

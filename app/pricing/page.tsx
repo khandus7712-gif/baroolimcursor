@@ -208,9 +208,9 @@ export default function PricingPage() {
                       if (plan.id === 'free') {
                         router.push('/studio');
                       } else if (plan.id === 'enterprise') {
-                        window.location.href = 'mailto:pernar.go@gmail.com';
+                        window.location.href = 'mailto:pernar.go@gmail.com?subject=엔터프라이즈 플랜 문의';
                       } else {
-                        alert('결제 시스템 준비 중입니다!');
+                        router.push(`/payment?plan=${plan.id.toUpperCase()}`);
                       }
                     }}
                     className={`w-full py-4 rounded-xl font-bold transition-all ${

@@ -17,6 +17,7 @@ import {
 export default function HomePage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { data: session, status } = useSession();
 
   useEffect(() => {
@@ -27,13 +28,23 @@ export default function HomePage() {
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-900 text-white overflow-hidden">
       {/* 헤더 */}
       <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-black/50 border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-8 h-8 text-brand-neon-purple drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]" />
-            <span className="text-2xl font-black text-white">바로올림</span>
+            <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-brand-neon-purple drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]" />
+            <span className="text-xl sm:text-2xl font-black text-white">바로올림</span>
           </div>
           
-          <div className="flex items-center gap-4">
+          {/* 데스크톱 메뉴 */}
+          <div className="hidden lg:flex items-center gap-4">
+            <button
+              onClick={() => router.push('/waitlist')}
+              className="text-white/80 hover:text-white transition-colors px-4 py-2 font-medium relative group"
+            >
+              <span className="relative">
+                🎉 사전예약
+                <span className="absolute -top-1 -right-6 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full animate-pulse">NEW</span>
+              </span>
+            </button>
             <button
               onClick={() => router.push('/pricing')}
               className="text-white/80 hover:text-white transition-colors px-4 py-2 font-medium"
@@ -84,11 +95,91 @@ export default function HomePage() {
               시작하기
             </button>
           </div>
+
+          {/* 모바일 메뉴 버튼 */}
+          <div className="lg:hidden flex items-center gap-2">
+            <button 
+              onClick={() => router.push('/studio')}
+              className="bg-gradient-to-r from-brand-neon-purple to-brand-neon-pink px-4 py-2 rounded-full font-bold text-white text-sm"
+            >
+              시작
+            </button>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              aria-label="메뉴"
+            >
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {mobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </div>
         </div>
+
+        {/* 모바일 드롭다운 메뉴 */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden bg-black/95 backdrop-blur-xl border-t border-white/10">
+            <div className="max-w-7xl mx-auto px-4 py-4 space-y-2">
+              <button
+                onClick={() => { router.push('/waitlist'); setMobileMenuOpen(false); }}
+                className="w-full text-left px-4 py-3 hover:bg-white/10 rounded-lg transition-colors text-white font-medium flex items-center justify-between"
+              >
+                <span>🎉 사전예약</span>
+                <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">NEW</span>
+              </button>
+              <button
+                onClick={() => { router.push('/pricing'); setMobileMenuOpen(false); }}
+                className="w-full text-left px-4 py-3 hover:bg-white/10 rounded-lg transition-colors text-white font-medium"
+              >
+                💰 요금제
+              </button>
+              <button
+                onClick={() => { router.push('/scheduled'); setMobileMenuOpen(false); }}
+                className="w-full text-left px-4 py-3 hover:bg-white/10 rounded-lg transition-colors text-white font-medium"
+              >
+                📅 예약 관리
+              </button>
+              {status === 'loading' ? (
+                <div className="px-4 py-3 text-white/60">로딩 중...</div>
+              ) : session ? (
+                <>
+                  <div className="px-4 py-3 text-white/90 border-t border-white/10 flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    <span className="text-sm">{session.user?.name || session.user?.email?.split('@')[0]}</span>
+                  </div>
+                  <button
+                    onClick={() => { router.push('/mypage'); setMobileMenuOpen(false); }}
+                    className="w-full text-left px-4 py-3 hover:bg-white/10 rounded-lg transition-colors text-white font-medium"
+                  >
+                    👤 마이페이지
+                  </button>
+                  <button
+                    onClick={() => signOut({ callbackUrl: '/' })}
+                    className="w-full text-left px-4 py-3 hover:bg-white/10 rounded-lg transition-colors text-red-400 font-medium flex items-center gap-2"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    로그아웃
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => { router.push('/login'); setMobileMenuOpen(false); }}
+                  className="w-full text-left px-4 py-3 hover:bg-white/10 rounded-lg transition-colors text-white font-medium"
+                >
+                  로그인
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </header>
 
       {/* 히어로 섹션 */}
-      <section className="relative pt-32 pb-20 px-6">
+      <section className="relative pt-24 sm:pt-32 pb-16 sm:pb-20 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto text-center">
           {/* 배경 글로우 효과 */}
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-brand-neon-purple/20 rounded-full blur-[120px] animate-pulse-slow"></div>
@@ -96,21 +187,21 @@ export default function HomePage() {
           {/* 초대형 타이포그래피 */}
           <div className="relative z-10 mb-8 animate-fade-in">
             {/* 메인 타이틀 - 감성 메시지 */}
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black mb-8 leading-tight">
-              <div className="text-white/90 drop-shadow-[0_0_20px_rgba(255,255,255,0.3)] mb-4">
+            <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black mb-6 sm:mb-8 leading-tight">
+              <div className="text-white/90 drop-shadow-[0_0_20px_rgba(255,255,255,0.3)] mb-2 sm:mb-4">
                 사장님,
               </div>
-              <div className="text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.5)] mb-4">
+              <div className="text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.5)] mb-2 sm:mb-4">
                 콘텐츠는 제가 만들게요.
               </div>
-              <div className="flex items-center justify-center gap-3 text-white drop-shadow-[0_0_30px_rgba(168,85,247,0.8)]">
-                사장님은 장사만 하세요
-                <span className="text-6xl sm:text-7xl lg:text-8xl">😊</span>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 text-white drop-shadow-[0_0_30px_rgba(168,85,247,0.8)]">
+                <span>사장님은 장사만 하세요</span>
+                <span className="text-5xl sm:text-6xl lg:text-8xl">😊</span>
               </div>
             </h1>
             
             {/* 서브 타이틀 */}
-            <p className="text-2xl sm:text-3xl lg:text-4xl text-white/80 mb-12 font-medium drop-shadow-[0_0_20px_rgba(168,85,247,0.3)]">
+            <p className="text-xl sm:text-2xl lg:text-4xl text-white/80 mb-8 sm:mb-12 font-medium drop-shadow-[0_0_20px_rgba(168,85,247,0.3)]">
               30초면 충분합니다.
             </p>
 
@@ -353,14 +444,25 @@ export default function HomePage() {
               30초 후, 당신의 첫 마케팅 콘텐츠가 완성됩니다
             </p>
             
-            <button
-              onClick={() => router.push('/studio')}
-              className="inline-flex items-center gap-3 bg-gradient-to-r from-brand-neon-purple to-brand-neon-pink px-12 py-6 rounded-2xl text-xl font-black text-white shadow-[0_0_40px_rgba(168,85,247,0.6)] hover:shadow-[0_0_60px_rgba(168,85,247,0.8)] transition-all duration-300 hover:scale-105"
-            >
-              <PlayCircle className="w-8 h-8" />
-              <span>무료로 시작하기</span>
-              <ArrowRight className="w-8 h-8" />
-            </button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+              <button
+                onClick={() => router.push('/studio')}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 sm:gap-3 bg-gradient-to-r from-brand-neon-purple to-brand-neon-pink px-8 sm:px-12 py-4 sm:py-6 rounded-2xl text-lg sm:text-xl font-black text-white shadow-[0_0_40px_rgba(168,85,247,0.6)] hover:shadow-[0_0_60px_rgba(168,85,247,0.8)] transition-all duration-300 hover:scale-105"
+              >
+                <PlayCircle className="w-6 h-6 sm:w-8 sm:h-8" />
+                <span>무료로 시작하기</span>
+                <ArrowRight className="w-6 h-6 sm:w-8 sm:h-8" />
+              </button>
+              
+              <button
+                onClick={() => router.push('/waitlist')}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 sm:gap-3 bg-white/10 backdrop-blur-sm border-2 border-brand-neon-purple px-8 sm:px-12 py-4 sm:py-6 rounded-2xl text-lg sm:text-xl font-black text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 relative group"
+              >
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">특별혜택</span>
+                <Sparkles className="w-6 h-6 sm:w-8 sm:h-8" />
+                <span>사전예약하기</span>
+              </button>
+            </div>
           </div>
         </div>
       </section>

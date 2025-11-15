@@ -198,3 +198,21 @@ model ScheduledPost {
   @@index([status])
   @@index([scheduledFor, status])  // 복합 인덱스 (Cron Job용)
 }
+
+// 사전예약 대기자 명단
+model Waitlist {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  company   String?  // 업체명
+  phone     String?  // 전화번호
+  interest  String?  // 관심 분야 (음식점, 뷰티, 소매 등)
+  message   String?  // 문의사항
+  source    String?  // 유입 경로
+  notified  Boolean  @default(false)  // 출시 알림 발송 여부
+  createdAt DateTime @default(now())
+  
+  @@index([email])
+  @@index([createdAt])
+  @@index([notified])
+}

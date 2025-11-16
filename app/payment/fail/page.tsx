@@ -4,10 +4,11 @@
 
 'use client';
 
+import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { XCircle, ArrowLeft, RefreshCw } from 'lucide-react';
 
-export default function PaymentFailPage() {
+function PaymentFailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -76,6 +77,18 @@ export default function PaymentFailPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PaymentFailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-900 flex items-center justify-center">
+        <div className="text-white text-xl">로딩 중...</div>
+      </div>
+    }>
+      <PaymentFailContent />
+    </Suspense>
   );
 }
 

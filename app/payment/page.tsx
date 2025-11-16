@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Sparkles, Check, CreditCard, Shield, Zap, Star } from 'lucide-react';
@@ -45,7 +45,7 @@ const PLANS: Plan[] = [
   },
 ];
 
-export default function PaymentPage() {
+function PaymentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
@@ -343,6 +343,18 @@ export default function PaymentPage() {
         </button>
       </div>
     </div>
+  );
+}
+
+export default function PaymentPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-900 flex items-center justify-center">
+        <div className="text-white text-xl">로딩 중...</div>
+      </div>
+    }>
+      <PaymentContent />
+    </Suspense>
   );
 }
 

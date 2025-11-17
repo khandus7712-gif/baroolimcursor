@@ -15,6 +15,12 @@ import { generateContent, analyzeImage } from '@/lib/ai';
 import { uploadImage } from '@/lib/storage';
 import { prisma } from '@/lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
+import { 
+  searchWeb, 
+  formatSearchResultsForPrompt, 
+  shouldSearchWeb, 
+  buildSearchQuery 
+} from '@/lib/webSearch';
 
 /**
  * form-data 파싱
@@ -26,8 +32,6 @@ export const config = {
 };
 
 interface GenerateRequest {
-  image?: Buffer;
-  imageMimeType?: string;
   notes?: string;
   keywords?: string[];
   domainId: string;
@@ -37,6 +41,7 @@ interface GenerateRequest {
   link?: string;
   voiceHints?: string[];
   plugins?: string[];
+  enableSearch?: boolean; // 웹 검색 활성화 여부
 }
 
 /**
@@ -50,7 +55,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     // form-data 파싱
     const form = new IncomingForm({
-      maxFileSize: 10 * 1024 * 1024, // 10MB
+      maxFileSize: 20 * 1024 * 1024, // 개별 파일 20MB
+      maxTotalFileSize: 200 * 1024 * 1024, // 전체 업로드 합계 200MB
       keepExtensions: true,
     });
 
@@ -67,6 +73,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       link: Array.isArray(fields.link) ? fields.link[0] : fields.link,
       voiceHints: Array.isArray(fields.voiceHints) ? fields.voiceHints : fields.voiceHints ? [fields.voiceHints] : [],
       plugins: Array.isArray(fields.plugins) ? fields.plugins : fields.plugins ? [fields.plugins] : [],
+      enableSearch: Array.isArray(fields.enableSearch) 
+        ? fields.enableSearch[0] === 'true' 
+        : fields.enableSearch === 'true',
     };
 
     // 필수 필드 검증
@@ -74,35 +83,52 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Missing required fields: domainId, platformId' });
     }
 
-    // 이미지 처리
-    let imageBuffer: Buffer | undefined;
-    let imageMimeType: string | undefined;
-    let imageUrl: string | undefined;
+    // 이미지 처리 (최대 10장)
+    const rawImageFiles =
+      files.image && Array.isArray(files.image)
+        ? files.image
+        : files.image
+        ? [files.image]
+        : [];
+    const limitedImageFiles = rawImageFiles.slice(0, 10);
 
-    if (files.image && Array.isArray(files.image) && files.image.length > 0) {
-      const imageFile = files.image[0];
-      const originalBuffer = await fs.readFile(imageFile.filepath);
-      
-      // PNG를 JPEG로 변환 (Gemini API가 PNG를 지원하지 않음)
-      try {
-        imageBuffer = await sharp(originalBuffer)
-          .jpeg({ quality: 90 })
-          .toBuffer();
-        imageMimeType = 'image/jpeg';
-      } catch (error) {
-        console.error('Failed to convert image:', error);
-        // 변환 실패 시 원본 사용
-        imageBuffer = originalBuffer;
-        imageMimeType = imageFile.mimetype || 'image/jpeg';
-      }
+    type ProcessedImage = {
+      buffer: Buffer;
+      mimeType: string;
+      url?: string;
+    };
 
-      // 이미지 업로드
+    const processedImages: ProcessedImage[] = [];
+
+    for (const imageFile of limitedImageFiles) {
       try {
-        const fileName = `${uuidv4()}.jpg`;
-        imageUrl = await uploadImage(imageBuffer, fileName, imageMimeType);
+        const originalBuffer = await fs.readFile(imageFile.filepath);
+        let mimeType = imageFile.mimetype || 'image/jpeg';
+        let convertedBuffer = originalBuffer;
+
+        // PNG를 JPEG로 변환 (Gemini API가 PNG를 완전히 지원하지 않음)
+        try {
+          convertedBuffer = await sharp(originalBuffer).jpeg({ quality: 90 }).toBuffer();
+          mimeType = 'image/jpeg';
+        } catch (convertError) {
+          console.error('Failed to convert image:', convertError);
+        }
+
+        let imageUrl: string | undefined;
+        try {
+          const fileName = `${uuidv4()}.jpg`;
+          imageUrl = await uploadImage(convertedBuffer, fileName, mimeType);
+        } catch (uploadError) {
+          console.error('Failed to upload image:', uploadError);
+        }
+
+        processedImages.push({
+          buffer: convertedBuffer,
+          mimeType,
+          url: imageUrl,
+        });
       } catch (error) {
-        console.error('Failed to upload image:', error);
-        // 이미지 업로드 실패해도 계속 진행
+        console.error('Failed to process image:', error);
       }
     }
 
@@ -113,16 +139,52 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 2) 선택 플러그인 renderGuide 합치기
     const plugins = request.plugins && request.plugins.length > 0 ? getPlugins(request.plugins) : [];
 
-    // 3) 이미지 분석 (이미지가 있는 경우)
-    let imageCaption: string | undefined;
-    if (imageBuffer) {
+    // 2.5) 웹 검색 수행 (옵션)
+    let searchContext: string | undefined;
+    if (
+      request.enableSearch &&
+      shouldSearchWeb(request.notes, request.keywords) &&
+      request.brandName &&
+      request.region
+    ) {
       try {
-        const imageBase64 = imageBuffer.toString('base64');
-        const analysisPrompt = createImageAnalysisPrompt(domain, request.notes);
-        imageCaption = await analyzeImage(`data:${imageMimeType};base64,${imageBase64}`, analysisPrompt);
+        const searchQuery = buildSearchQuery(
+          request.notes,
+          request.keywords,
+          request.domainId,
+          request.brandName,
+          request.region
+        );
+        const searchResults = await searchWeb({
+          query: searchQuery,
+          maxResults: 5,
+          domain: request.domainId,
+        });
+        
+        if (searchResults.length > 0) {
+          searchContext = formatSearchResultsForPrompt(searchResults);
+          console.log(`Web search completed: Found ${searchResults.length} results`);
+        }
       } catch (error) {
-        console.error('Failed to analyze image:', error);
-        // 이미지 분석 실패해도 계속 진행
+        console.error('Failed to search web:', error);
+        // 검색 실패해도 계속 진행
+      }
+    }
+
+    // 3) 이미지 분석 (이미지가 있는 경우)
+    const imageCaptions: string[] = [];
+    if (processedImages.length > 0) {
+      for (const image of processedImages) {
+        try {
+          const imageBase64 = image.buffer.toString('base64');
+          const analysisPrompt = createImageAnalysisPrompt(domain, request.notes);
+          const caption = await analyzeImage(`data:${image.mimeType};base64,${imageBase64}`, analysisPrompt);
+          if (caption) {
+            imageCaptions.push(caption);
+          }
+        } catch (error) {
+          console.error('Failed to analyze image:', error);
+        }
       }
     }
 
@@ -139,10 +201,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           }
         : undefined,
       plugins,
+      searchContext, // 웹 검색 결과 포함
       content: {
         notes: request.notes,
         keywords: request.keywords,
-        imageCaption,
+        imageCaptions,
         region: request.region,
         link: request.link,
       },
@@ -157,9 +220,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 6) Google AI SDK(Gemini) 호출
     let rawContent: string;
     try {
-      if (imageBuffer) {
-        const imageBase64 = imageBuffer.toString('base64');
-        rawContent = await generateContent(prompt, `data:${imageMimeType};base64,${imageBase64}`);
+      if (processedImages.length > 0) {
+        const primaryImage = processedImages[0];
+        const imageBase64 = primaryImage.buffer.toString('base64');
+        rawContent = await generateContent(prompt, `data:${primaryImage.mimeType};base64,${imageBase64}`);
       } else {
         rawContent = await generateContent(prompt);
       }
@@ -180,10 +244,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     // 8) 결과 JSON 반환
+    const imageUrls = processedImages.map((image) => image.url).filter((url): url is string => Boolean(url));
+
     const result = {
       output: processed.output,
       hashtags: processed.hashtags,
       warnings: processed.warnings,
+      imageUrls,
+      imageCaptions,
     };
 
     // 9) 로깅 (Prisma Generation)
@@ -202,11 +270,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             region: request.region,
             link: request.link,
             plugins: request.plugins,
-            hasImage: !!imageBuffer,
+            hasImage: processedImages.length > 0,
           },
           output: result,
           metadata: {
-            imageUrl,
+            imageUrls,
             plugins: plugins.map((p) => p.id),
             warnings: processed.warnings,
           },

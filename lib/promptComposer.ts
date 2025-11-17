@@ -23,10 +23,11 @@ export interface PromptComposerInput {
   content: {
     notes?: string;
     keywords?: string[];
-    imageCaption?: string; // Vision 전처리 결과 (alt-like caption)
+    imageCaptions?: string[]; // Vision 전처리 결과 (alt-like caption)
     region?: string;
     link?: string;
   };
+  searchContext?: string; // 웹 검색 결과 (포맷팅된 문자열)
 }
 
 /**
@@ -51,6 +52,11 @@ export function composePrompt(input: PromptComposerInput): string {
   // [PLUGINS] 섹션
   if (input.plugins && input.plugins.length > 0) {
     sections.push(createPluginsSection(input.plugins));
+  }
+
+  // [RESEARCH_CONTEXT] 섹션 (웹 검색 결과)
+  if (input.searchContext) {
+    sections.push(input.searchContext);
   }
 
   // [CONTENT] 섹션
@@ -173,7 +179,7 @@ function createContentSection(
   content: {
     notes?: string;
     keywords?: string[];
-    imageCaption?: string;
+    imageCaptions?: string[];
     region?: string;
     link?: string;
   },
@@ -183,10 +189,13 @@ function createContentSection(
   const sections: string[] = ['[CONTENT]\n\nCreate marketing content with the following information:'];
 
   // 이미지 캡션 (Vision 전처리 결과)
-  if (content.imageCaption) {
-    sections.push(`Image Description: ${content.imageCaption}`);
+  if (content.imageCaptions && content.imageCaptions.length > 0) {
+    sections.push('Image Descriptions:');
+    content.imageCaptions.forEach((caption, index) => {
+      sections.push(`${index + 1}. ${caption}`);
+    });
     sections.push(
-      'Use this image description to create visual and engaging content that highlights what is shown in the image.'
+      'Use these image descriptions to create visually-rich storytelling. Reference the images naturally in the content.'
     );
   }
 

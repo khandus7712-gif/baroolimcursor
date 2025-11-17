@@ -7,6 +7,7 @@
 ## ✨ 주요 기능
 
 - 🤖 **AI 기반 콘텐츠 생성**: Google Gemini를 활용한 고품질 콘텐츠 자동 생성
+- 🔍 **웹 검색 기반 조사**: 관련 블로그 포스트를 자동으로 검색하여 더 풍부하고 트렌드에 맞는 콘텐츠 생성 (NEW ✨)
 - 🎯 **다양한 업종 지원**: 음식, 뷰티, 소매 등 업종별 맞춤 콘텐츠
 - 📱 **멀티 플랫폼**: Instagram, Blog, Threads, GMB 등 플랫폼별 최적화
 - 🖼️ **이미지 분석**: Vision API로 이미지 내용을 분석하여 콘텐츠에 반영
@@ -77,6 +78,10 @@ npm install
 # Google AI API (필수)
 GOOGLE_API_KEY=your-google-ai-api-key-here
 
+# Tavily API (선택사항 - 웹 검색 기능용)
+# https://tavily.com 에서 무료 API 키 발급 가능
+TAVILY_API_KEY=your-tavily-api-key-here
+
 # Database (필수)
 DATABASE_URL=postgresql://user:password@localhost:5432/baroolim
 
@@ -96,6 +101,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ### 환경 변수 설명
 
 - `GOOGLE_API_KEY`: Google AI Studio에서 발급받은 API 키 (필수)
+- `TAVILY_API_KEY`: Tavily API 키 (선택사항) - 웹 검색 기능 사용 시 필요. [Tavily](https://tavily.com)에서 무료로 발급 가능
 - `DATABASE_URL`: PostgreSQL 연결 문자열 (필수)
 - `STORAGE_*`: S3 호환 스토리지 설정 (이미지 업로드용, 선택사항)
 - `ALLOWED_ORIGINS`: CORS 허용 오리진 목록 (쉼표로 구분)

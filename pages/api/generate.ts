@@ -93,7 +93,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const limitedImageFiles = rawImageFiles.slice(0, 10);
 
     type ProcessedImage = {
-      buffer: Buffer;
+      buffer: Buffer | Uint8Array;
       mimeType: string;
       url?: string;
     };
@@ -104,12 +104,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       try {
         const originalBuffer = await fs.readFile(imageFile.filepath);
         let mimeType = imageFile.mimetype || 'image/jpeg';
-        let convertedBuffer = originalBuffer;
+        let convertedBuffer: Buffer | Uint8Array = originalBuffer;
 
         // PNG를 JPEG로 변환 (Gemini API가 PNG를 완전히 지원하지 않음)
         try {
           const converted = await sharp(originalBuffer).jpeg({ quality: 90 }).toBuffer();
-          convertedBuffer = Buffer.from(converted);
+          convertedBuffer = new Uint8Array(converted);
           mimeType = 'image/jpeg';
         } catch (convertError) {
           console.error('Failed to convert image:', convertError);

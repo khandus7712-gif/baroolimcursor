@@ -136,7 +136,7 @@ export function shouldSearchWeb(notes?: string, keywords?: string[]): boolean {
   }
   
   // 최소한의 정보가 있어야 검색 가능
-  const hasContent = (notes && notes.length > 10) || (keywords && keywords.length > 0);
+  const hasContent = Boolean((notes && notes.length > 10) || (keywords && keywords.length > 0));
   return hasContent;
 }
 

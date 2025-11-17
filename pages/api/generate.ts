@@ -108,7 +108,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         // PNG를 JPEG로 변환 (Gemini API가 PNG를 완전히 지원하지 않음)
         try {
-          convertedBuffer = await sharp(originalBuffer).jpeg({ quality: 90 }).toBuffer();
+          const converted = await sharp(originalBuffer).jpeg({ quality: 90 }).toBuffer();
+          convertedBuffer = Buffer.from(converted);
           mimeType = 'image/jpeg';
         } catch (convertError) {
           console.error('Failed to convert image:', convertError);

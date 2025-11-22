@@ -251,17 +251,59 @@ function StudioPageContent() {
       selectedPlugins.forEach(pluginId => formData.append('plugins', pluginId));
       formData.append('enableSearch', enableSearch ? 'true' : 'false');
 
+      console.log('[generate] Sending request to /api/generate');
       const response = await fetch('/api/generate', {
         method: 'POST',
         body: formData,
       });
+      console.log('[generate] Response status:', response.status, response.statusText);
+
+      // 응답 본문을 텍스트로 먼저 읽기 (한 번만 읽을 수 있음)
+      const responseText = await response.text();
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '콘텐츠 생성에 실패했습니다.');
+        let errorMessage = '콘텐츠 생성에 실패했습니다.';
+        try {
+          // 응답이 비어있지 않고 JSON 형식인지 확인
+          if (responseText && responseText.trim().length > 0) {
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+              const errorData = JSON.parse(responseText);
+              errorMessage = errorData.error || errorMessage;
+            } else {
+              errorMessage = responseText || `서버 오류 (${response.status})`;
+            }
+          } else {
+            errorMessage = `서버 오류 (${response.status}): ${response.statusText || 'Method not allowed'}`;
+          }
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError);
+          errorMessage = `서버 오류 (${response.status}): ${response.statusText || 'Unknown error'}`;
+          if (responseText) {
+            errorMessage += ` - ${responseText.substring(0, 100)}`;
+          }
+        }
+        throw new Error(errorMessage);
       }
 
-      const data: GenerateResult = await response.json();
+      // 성공 응답 처리
+      if (!responseText || responseText.trim().length === 0) {
+        throw new Error('서버에서 빈 응답을 받았습니다.');
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error(`서버에서 잘못된 형식의 응답을 받았습니다. Content-Type: ${contentType}`);
+      }
+
+      let data: GenerateResult;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Failed to parse JSON response:', parseError);
+        console.error('Response text:', responseText.substring(0, 500));
+        throw new Error('서버 응답을 파싱할 수 없습니다.');
+      }
       setResult(data);
 
       if (data.warnings && data.warnings.length > 0) {

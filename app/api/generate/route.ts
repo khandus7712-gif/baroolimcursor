@@ -1,11 +1,9 @@
 /**
- * 콘텐츠 생성 API
+ * 콘텐츠 생성 API (App Router)
  * form-data로 이미지와 메모를 받아 AI로 콘텐츠 생성
  */
 
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { IncomingForm } from 'formidable';
-import { promises as fs } from 'fs';
+import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
 import { composePrompt, createImageAnalysisPrompt } from '@/lib/promptComposer';
 import { runPostProcess } from '@/lib/postProcess';
@@ -22,15 +20,6 @@ import {
   buildSearchQuery 
 } from '@/lib/webSearch';
 
-/**
- * form-data 파싱
- */
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
 interface GenerateRequest {
   notes?: string;
   keywords?: string[];
@@ -41,79 +30,45 @@ interface GenerateRequest {
   link?: string;
   voiceHints?: string[];
   plugins?: string[];
-  enableSearch?: boolean; // 웹 검색 활성화 여부
+  enableSearch?: boolean;
 }
 
 /**
- * 콘텐츠 생성 핸들러
+ * 콘텐츠 생성 핸들러 (POST)
  */
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // CORS 헤더 추가 (필요한 경우)
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Content-Type', 'application/json');
-
-  // OPTIONS 요청 처리 (CORS preflight)
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    console.error(`[generate] Invalid method: ${req.method}, expected POST`);
-    return res.status(405).json({ 
-      error: `Method not allowed. Expected POST, got ${req.method}`,
-      method: req.method 
-    });
-  }
-
+export async function POST(request: NextRequest) {
   try {
+    console.log('[generate] POST request received');
+    
     // form-data 파싱
-    const form = new IncomingForm({
-      maxFileSize: 20 * 1024 * 1024, // 개별 파일 20MB
-      maxTotalFileSize: 200 * 1024 * 1024, // 전체 업로드 합계 200MB
-      keepExtensions: true,
-    });
-
-    let fields: any, files: any;
-    try {
-      [fields, files] = await form.parse(req);
-    } catch (parseError) {
-      console.error('Failed to parse form-data:', parseError);
-      return res.status(400).json({
-        error: `Failed to parse form data: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
-      });
-    }
-
+    const formData = await request.formData();
+    
     // 요청 데이터 추출
-    const request: GenerateRequest = {
-      domainId: Array.isArray(fields.domainId) ? fields.domainId[0] : fields.domainId || '',
-      platformId: Array.isArray(fields.platformId) ? fields.platformId[0] : fields.platformId || '',
-      notes: Array.isArray(fields.notes) ? fields.notes[0] : fields.notes,
-      keywords: Array.isArray(fields.keywords) ? fields.keywords : fields.keywords ? [fields.keywords] : [],
-      brandName: Array.isArray(fields.brandName) ? fields.brandName[0] : fields.brandName,
-      region: Array.isArray(fields.region) ? fields.region[0] : fields.region,
-      link: Array.isArray(fields.link) ? fields.link[0] : fields.link,
-      voiceHints: Array.isArray(fields.voiceHints) ? fields.voiceHints : fields.voiceHints ? [fields.voiceHints] : [],
-      plugins: Array.isArray(fields.plugins) ? fields.plugins : fields.plugins ? [fields.plugins] : [],
-      enableSearch: Array.isArray(fields.enableSearch) 
-        ? fields.enableSearch[0] === 'true' 
-        : fields.enableSearch === 'true',
+    const requestData: GenerateRequest = {
+      domainId: formData.get('domainId') as string || '',
+      platformId: formData.get('platformId') as string || '',
+      notes: formData.get('notes') as string || undefined,
+      keywords: formData.getAll('keywords').map(k => k.toString()),
+      brandName: formData.get('brandName') as string || undefined,
+      region: formData.get('region') as string || undefined,
+      link: formData.get('link') as string || undefined,
+      voiceHints: formData.getAll('voiceHints').map(h => h.toString()),
+      plugins: formData.getAll('plugins').map(p => p.toString()),
+      enableSearch: formData.get('enableSearch') === 'true',
     };
 
     // 필수 필드 검증
-    if (!request.domainId || !request.platformId) {
-      return res.status(400).json({ error: 'Missing required fields: domainId, platformId' });
+    if (!requestData.domainId || !requestData.platformId) {
+      return NextResponse.json(
+        { error: 'Missing required fields: domainId, platformId' },
+        { status: 400 }
+      );
     }
 
     // 이미지 처리 (최대 10장)
-    const rawImageFiles =
-      files.image && Array.isArray(files.image)
-        ? files.image
-        : files.image
-        ? [files.image]
-        : [];
-    const limitedImageFiles = rawImageFiles.slice(0, 10);
+    const imageFiles = formData.getAll('image').filter(
+      (file): file is File => file instanceof File
+    ).slice(0, 10);
 
     type ProcessedImage = {
       buffer: Buffer | Uint8Array;
@@ -123,10 +78,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const processedImages: ProcessedImage[] = [];
 
-    for (const imageFile of limitedImageFiles) {
+    for (const imageFile of imageFiles) {
       try {
-        const originalBuffer = await fs.readFile(imageFile.filepath);
-        let mimeType = imageFile.mimetype || 'image/jpeg';
+        const arrayBuffer = await imageFile.arrayBuffer();
+        const originalBuffer = Buffer.from(arrayBuffer);
+        let mimeType = imageFile.type || 'image/jpeg';
         let convertedBuffer: Buffer | Uint8Array = originalBuffer;
 
         // PNG를 JPEG로 변환 (Gemini API가 PNG를 완전히 지원하지 않음)
@@ -157,32 +113,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // 1) 도메인/플랫폼 JSON 로드
-    const domain = loadDomainProfile(request.domainId);
-    const platform = loadPlatformTemplate(request.platformId);
+    const domain = loadDomainProfile(requestData.domainId);
+    const platform = loadPlatformTemplate(requestData.platformId);
 
     // 2) 선택 플러그인 renderGuide 합치기
-    const plugins = request.plugins && request.plugins.length > 0 ? getPlugins(request.plugins) : [];
+    const plugins = requestData.plugins && requestData.plugins.length > 0 
+      ? getPlugins(requestData.plugins) 
+      : [];
 
     // 2.5) 웹 검색 수행 (옵션)
     let searchContext: string | undefined;
     if (
-      request.enableSearch &&
-      shouldSearchWeb(request.notes, request.keywords) &&
-      request.brandName &&
-      request.region
+      requestData.enableSearch &&
+      shouldSearchWeb(requestData.notes, requestData.keywords) &&
+      requestData.brandName &&
+      requestData.region
     ) {
       try {
         const searchQuery = buildSearchQuery(
-          request.notes,
-          request.keywords,
-          request.domainId,
-          request.brandName,
-          request.region
+          requestData.notes,
+          requestData.keywords,
+          requestData.domainId,
+          requestData.brandName,
+          requestData.region
         );
         const searchResults = await searchWeb({
           query: searchQuery,
           maxResults: 5,
-          domain: request.domainId,
+          domain: requestData.domainId,
         });
         
         if (searchResults.length > 0) {
@@ -201,7 +159,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       for (const image of processedImages) {
         try {
           const imageBase64 = image.buffer.toString('base64');
-          const analysisPrompt = createImageAnalysisPrompt(domain, request.notes);
+          const analysisPrompt = createImageAnalysisPrompt(domain, requestData.notes);
           const caption = await analyzeImage(`data:${image.mimeType};base64,${imageBase64}`, analysisPrompt);
           if (caption) {
             imageCaptions.push(caption);
@@ -216,29 +174,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const prompt = composePrompt({
       domain,
       platform,
-      brand: request.brandName
+      brand: requestData.brandName
         ? {
-            name: request.brandName,
-            tone: request.voiceHints?.[0],
-            keywords: request.keywords,
-            voiceHints: request.voiceHints,
+            name: requestData.brandName,
+            tone: requestData.voiceHints?.[0],
+            keywords: requestData.keywords,
+            voiceHints: requestData.voiceHints,
           }
         : undefined,
       plugins,
       searchContext, // 웹 검색 결과 포함
       content: {
-        notes: request.notes,
-        keywords: request.keywords,
+        notes: requestData.notes,
+        keywords: requestData.keywords,
         imageCaptions,
-        region: request.region,
-        link: request.link,
+        region: requestData.region,
+        link: requestData.link,
       },
     });
 
     // 5) 토큰 길이 가드 (대략적인 체크)
     const estimatedTokens = prompt.length / 4; // 대략 1토큰 = 4글자
     if (estimatedTokens > 30000) {
-      return res.status(400).json({ error: 'Prompt too long. Please reduce input size.' });
+      return NextResponse.json(
+        { error: 'Prompt too long. Please reduce input size.' },
+        { status: 400 }
+      );
     }
 
     // 6) Google AI SDK(Gemini) 호출
@@ -253,18 +214,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     } catch (error) {
       console.error('Error generating content with AI:', error);
-      return res.status(500).json({
-        error: `Failed to generate content: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      });
+      return NextResponse.json(
+        { error: `Failed to generate content: ${error instanceof Error ? error.message : 'Unknown error'}` },
+        { status: 500 }
+      );
     }
 
     // 7) postProcess() 적용
     const processed = await runPostProcess(rawContent, {
       domain,
       platform,
-      region: request.region,
-      keywords: request.keywords,
-      link: request.link,
+      region: requestData.region,
+      keywords: requestData.keywords,
+      link: requestData.link,
     });
 
     // 8) 결과 JSON 반환
@@ -280,20 +242,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // 9) 로깅 (Prisma Generation)
     try {
-      const userId = (req.headers['x-user-id'] as string) || 'anonymous';
+      const userId = request.headers.get('x-user-id') || 'anonymous';
 
       await prisma.generation.create({
         data: {
           userId,
-          domainId: request.domainId,
-          platformIds: [request.platformId],
+          domainId: requestData.domainId,
+          platformIds: [requestData.platformId],
           input: {
-            notes: request.notes,
-            keywords: request.keywords,
-            brandName: request.brandName,
-            region: request.region,
-            link: request.link,
-            plugins: request.plugins,
+            notes: requestData.notes,
+            keywords: requestData.keywords,
+            brandName: requestData.brandName,
+            region: requestData.region,
+            link: requestData.link,
+            plugins: requestData.plugins,
             hasImage: processedImages.length > 0,
           },
           output: result,
@@ -309,11 +271,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // 로깅 실패해도 응답은 반환
     }
 
-    return res.status(200).json(result);
+    return NextResponse.json(result, { status: 200 });
   } catch (error) {
     console.error('Error in generate API:', error);
-    return res.status(500).json({
-      error: error instanceof Error ? error.message : 'Internal server error',
-    });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
+
+/**
+ * OPTIONS 요청 처리 (CORS preflight)
+ */
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, x-user-id',
+    },
+  });
+}
+

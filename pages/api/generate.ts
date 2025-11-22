@@ -48,8 +48,23 @@ interface GenerateRequest {
  * 콘텐츠 생성 핸들러
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // CORS 헤더 추가 (필요한 경우)
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Content-Type', 'application/json');
+
+  // OPTIONS 요청 처리 (CORS preflight)
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    console.error(`[generate] Invalid method: ${req.method}, expected POST`);
+    return res.status(405).json({ 
+      error: `Method not allowed. Expected POST, got ${req.method}`,
+      method: req.method 
+    });
   }
 
   try {
@@ -60,7 +75,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       keepExtensions: true,
     });
 
-    const [fields, files] = await form.parse(req);
+    let fields: any, files: any;
+    try {
+      [fields, files] = await form.parse(req);
+    } catch (parseError) {
+      console.error('Failed to parse form-data:', parseError);
+      return res.status(400).json({
+        error: `Failed to parse form data: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
+      });
+    }
 
     // 요청 데이터 추출
     const request: GenerateRequest = {

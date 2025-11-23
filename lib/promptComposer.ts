@@ -105,10 +105,12 @@ function createPlatformRulesSection(
 ): string {
   const mustInclude = platform.mustInclude || [];
   const bannedWords = platform.bannedWords || [];
+  const minChars = platform.id === 'blog' ? 1500 : undefined;
 
   return `[PLATFORM_RULES]
 
 Platform: ${platform.id}
+${minChars ? `Minimum Characters: ${minChars} (REQUIRED - content must be at least ${minChars} characters)` : ''}
 Maximum Characters: ${platform.maxChars}
 Line Break Style: ${platform.lineBreakStyle}
 Hashtag Count: ${platform.hashtagCount}
@@ -233,14 +235,21 @@ function createContentSection(
     );
   }
 
+  // 블로그 플랫폼일 때 최소 글자 수를 먼저 강조
+  if (platform.id === 'blog') {
+    sections.push(
+      `\n**⚠️ 중요: 블로그 콘텐츠는 반드시 최소 1500자 이상(공백 제외) 작성해야 합니다.**\n- 충분한 본문 내용으로 독자에게 가치 있는 정보를 제공하세요\n- 여러 섹션과 소제목을 활용하여 내용을 풍부하게 구성하세요\n- 각 섹션마다 상세한 설명과 예시를 포함하세요`
+    );
+  }
+
   sections.push(
     `\nGenerate content that:\n- Follows the platform rules and format\n- Uses the brand voice and tone\n- Includes relevant value propositions\n- Engages the target audience\n- Drives action through effective CTA`
   );
 
-  // 블로그 플랫폼일 때 가독성 강조
+  // 블로그 플랫폼일 때 가독성 강조 및 최소 글자 수 요구
   if (platform.id === 'blog') {
     sections.push(
-      `\n**가독성 필수 요구사항:**\n- 모든 단락 사이에 빈 줄(\\n\\n) 삽입\n- 소제목(##) 전후로 빈 줄 2개씩 삽입\n- 각 단락은 2-4문장으로 간결하게\n- 긴 텍스트 블록 금지\n- 목록 사용 시 각 항목 간 공백 유지`
+      `\n**블로그 콘텐츠 필수 요구사항:**\n- **최소 1500자 이상 작성 필수** (공백 제외)\n- 모든 단락 사이에 빈 줄(\\n\\n) 삽입\n- 소제목(##) 전후로 빈 줄 2개씩 삽입\n- 각 단락은 2-4문장으로 간결하게\n- 긴 텍스트 블록 금지\n- 목록 사용 시 각 항목 간 공백 유지\n- 충분한 본문 내용으로 독자에게 가치 있는 정보 제공\n- 여러 섹션과 소제목을 활용하여 내용을 풍부하게 구성`
     );
   }
 

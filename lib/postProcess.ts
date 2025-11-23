@@ -359,6 +359,17 @@ function applyPlatformFormatting(text: string, platform: PlatformTemplate): stri
       break;
     case 'blog':
       // 블로그: 가독성 최우선 - 단락 구분 명확히
+      // 0. 불필요한 라벨 제거 (Caption:, **Caption:** 등)
+      formatted = formatted.replace(/\*\*Caption:\*\*/gi, '');
+      formatted = formatted.replace(/Caption:/gi, '');
+      formatted = formatted.replace(/\*\*이미지 설명:\*\*/gi, '');
+      formatted = formatted.replace(/이미지 설명:/gi, '');
+      
+      // 0-1. 일반적인 섹션 제목 제거 또는 자연스럽게 변경
+      formatted = formatted.replace(/^##\s*도입부\s*$/gim, '');
+      formatted = formatted.replace(/^##\s*본문\s*$/gim, '');
+      formatted = formatted.replace(/^##\s*결론\s*$/gim, '');
+      
       // 1. 먼저 모든 단일 개행을 더블로 변환
       formatted = formatted.replace(/([^\n])\n([^\n])/g, '$1\n\n$2');
       // 2. 3개 이상 연속 개행을 2개로 정리

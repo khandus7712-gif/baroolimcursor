@@ -5,7 +5,7 @@
  */
 
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Check, X, Sparkles, Zap, Crown, Rocket } from 'lucide-react';
+import { ArrowLeft, Check, X, Sparkles, Zap, Crown, Rocket, ShoppingCart } from 'lucide-react';
 
 export default function PricingPage() {
   const router = useRouter();
@@ -30,6 +30,28 @@ export default function PricingPage() {
       gradient: 'from-gray-600 to-gray-800',
       badge: null,
       buttonText: '무료로 시작하기',
+    },
+    {
+      id: 'single',
+      name: '단건 구매',
+      icon: ShoppingCart,
+      price: '990원',
+      period: '1회',
+      description: '필요할 때만 구매하세요',
+      features: [
+        { text: '콘텐츠 1건 생성', included: true },
+        { text: '모든 업종 이용 가능', included: true },
+        { text: '4개 플랫폼 지원', included: true },
+        { text: 'AI 콘텐츠 생성', included: true },
+        { text: '해시태그 자동 생성', included: true },
+        { text: '이미지 분석', included: true },
+        { text: '예약 발행', included: false },
+        { text: '플러그인', included: false },
+      ],
+      gradient: 'from-green-600 to-emerald-600',
+      badge: 'NEW',
+      badgeColor: 'bg-green-500',
+      buttonText: '990원 구매하기',
     },
     {
       id: 'basic',
@@ -153,7 +175,7 @@ export default function PricingPage() {
         </div>
 
         {/* 요금제 카드 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-16">
           {plans.map((plan) => {
             const Icon = plan.icon;
             return (
@@ -207,6 +229,8 @@ export default function PricingPage() {
                     onClick={() => {
                       if (plan.id === 'free') {
                         router.push('/studio');
+                      } else if (plan.id === 'single') {
+                        router.push('/payment?plan=SINGLE_CONTENT');
                       } else if (plan.id === 'enterprise') {
                         window.location.href = 'mailto:pernar.go@gmail.com?subject=엔터프라이즈 플랜 문의';
                       } else {

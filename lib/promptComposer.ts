@@ -73,6 +73,14 @@ function createSystemSection(domain: DomainProfile): string {
 
 You are an expert marketing content writer specializing in the ${domain.id} industry.
 
+**CRITICAL LANGUAGE REQUIREMENT: 
+- Write ALL content ONLY in Korean (한국어)
+- Do NOT use English words, phrases, or sentences anywhere in the content
+- Do NOT include English translations in parentheses
+- Use Korean translations for all concepts
+- Examples: Use "맛집" instead of "restaurant", "맛있는" instead of "delicious", "추천" instead of "recommend"
+- If you need to describe technical terms, use Korean equivalents only**
+
 Brand Voice:
 - Description: ${domain.tone.brandVoiceDesc}
 - Formality: ${domain.tone.formality}
@@ -249,13 +257,13 @@ function createContentSection(
   }
 
   sections.push(
-    `\nGenerate content that:\n- Follows the platform rules and format\n- Uses the brand voice and tone\n- Includes relevant value propositions\n- Engages the target audience\n- Drives action through effective CTA`
+    `\nGenerate content that:\n- **Write ONLY in Korean (한국어). Do NOT use any English words, phrases, or sentences. Do NOT include English translations in parentheses.**\n- Follows the platform rules and format\n- Uses the brand voice and tone\n- Includes relevant value propositions\n- Engages the target audience\n- Drives action through effective CTA`
   );
 
   // 블로그 플랫폼일 때 가독성 강조 및 최소 글자 수 요구
   if (platform.id === 'blog') {
     sections.push(
-      `\n**블로그 콘텐츠 필수 요구사항:**\n- **최소 1500자 이상 작성 필수** (공백 제외)\n- 모든 단락 사이에 빈 줄(\\n\\n) 삽입\n- 소제목(##) 전후로 빈 줄 2개씩 삽입\n- 각 단락은 2-4문장으로 간결하게\n- 긴 텍스트 블록 금지\n- 목록 사용 시 각 항목 간 공백 유지\n- 충분한 본문 내용으로 독자에게 가치 있는 정보 제공\n- 여러 섹션과 소제목을 활용하여 내용을 풍부하게 구성\n- **섹션 제목은 '도입부', '본문', '결론' 같은 일반적인 단어를 사용하지 말고, 콘텐츠 내용에 맞는 구체적이고 자연스러운 제목을 사용하세요** (예: '아롱하다의 특별한 메뉴', '맛의 비밀', '위치 및 예약 안내' 등)\n- **이미지 설명을 본문에 포함할 때는 'Caption:', '**Caption:**', '이미지 설명:' 같은 라벨을 사용하지 말고, 자연스러운 문장으로 이미지 내용을 설명하세요**`
+      `\n**블로그 콘텐츠 필수 요구사항:**\n- **모든 내용은 반드시 한국어로만 작성하세요. 영어 단어, 문장, 표현, 괄호 안의 영어 번역을 절대 사용하지 마세요.**\n- **최소 1500자 이상 작성 필수** (공백 제외)\n- 모든 단락 사이에 빈 줄(\\n\\n) 삽입\n- 소제목(##) 전후로 빈 줄 2개씩 삽입\n- 각 단락은 2-4문장으로 간결하게\n- 긴 텍스트 블록 금지\n- 목록 사용 시 각 항목 간 공백 유지\n- 충분한 본문 내용으로 독자에게 가치 있는 정보 제공\n- 여러 섹션과 소제목을 활용하여 내용을 풍부하게 구성\n- **섹션 제목은 '도입부', '본문', '결론' 같은 일반적인 단어를 사용하지 말고, 콘텐츠 내용에 맞는 구체적이고 자연스러운 제목을 사용하세요** (예: '아롱하다의 특별한 메뉴', '맛의 비밀', '위치 및 예약 안내' 등)\n- **이미지 설명을 본문에 포함할 때는 'Caption:', '**Caption:**', '이미지 설명:' 같은 라벨을 사용하지 말고, 자연스러운 문장으로 이미지 내용을 설명하세요**`
     );
   }
 
@@ -270,12 +278,13 @@ function createContentSection(
  */
 export function createImageAnalysisPrompt(domain: DomainProfile, notes?: string): string {
   const parts: string[] = [
-    'Analyze the provided image and create a detailed alt-text-like caption that describes:',
-    '1. Main subjects and objects visible',
-    '2. Colors, lighting, and overall mood',
-    '3. Composition and visual style',
-    '4. Any text or signs visible',
-    '5. Overall impression and emotions evoked',
+    '**중요: 모든 설명은 한국어로만 작성하세요. 영어를 사용하지 마세요.**',
+    '제공된 이미지를 분석하고 다음을 설명하는 상세한 alt-text 형식의 캡션을 한국어로 작성하세요:',
+    '1. 보이는 주요 대상과 객체',
+    '2. 색상, 조명, 전체적인 분위기',
+    '3. 구도와 시각적 스타일',
+    '4. 보이는 텍스트나 표지판',
+    '5. 전체적인 인상과 감정',
   ];
 
   // 도메인별 강조점

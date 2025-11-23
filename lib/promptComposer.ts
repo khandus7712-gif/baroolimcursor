@@ -192,13 +192,19 @@ function createContentSection(
 
   // 이미지 캡션 (Vision 전처리 결과)
   if (content.imageCaptions && content.imageCaptions.length > 0) {
-    sections.push('Image Descriptions:');
+    sections.push('Image Descriptions (use as reference only, do NOT include labels like "Caption:" or "**Caption:**" in the final content):');
     content.imageCaptions.forEach((caption, index) => {
       sections.push(`${index + 1}. ${caption}`);
     });
-    sections.push(
-      'Use these image descriptions to create visually-rich storytelling. Reference the images naturally in the content.'
-    );
+    if (platform.id === 'blog') {
+      sections.push(
+        '**중요:** 이미지 설명을 참고하여 본문에 자연스럽게 이미지 내용을 녹여내세요. 하지만 "Caption:", "**Caption:**", "이미지 설명:" 같은 라벨이나 표시를 본문에 포함하지 마세요. 이미지에 대한 설명은 본문의 자연스러운 문장 속에 포함시키세요.'
+      );
+    } else {
+      sections.push(
+        'Use these image descriptions to create visually-rich storytelling. Reference the images naturally in the content.'
+      );
+    }
   }
 
   // 사용자 메모
@@ -249,7 +255,7 @@ function createContentSection(
   // 블로그 플랫폼일 때 가독성 강조 및 최소 글자 수 요구
   if (platform.id === 'blog') {
     sections.push(
-      `\n**블로그 콘텐츠 필수 요구사항:**\n- **최소 1500자 이상 작성 필수** (공백 제외)\n- 모든 단락 사이에 빈 줄(\\n\\n) 삽입\n- 소제목(##) 전후로 빈 줄 2개씩 삽입\n- 각 단락은 2-4문장으로 간결하게\n- 긴 텍스트 블록 금지\n- 목록 사용 시 각 항목 간 공백 유지\n- 충분한 본문 내용으로 독자에게 가치 있는 정보 제공\n- 여러 섹션과 소제목을 활용하여 내용을 풍부하게 구성`
+      `\n**블로그 콘텐츠 필수 요구사항:**\n- **최소 1500자 이상 작성 필수** (공백 제외)\n- 모든 단락 사이에 빈 줄(\\n\\n) 삽입\n- 소제목(##) 전후로 빈 줄 2개씩 삽입\n- 각 단락은 2-4문장으로 간결하게\n- 긴 텍스트 블록 금지\n- 목록 사용 시 각 항목 간 공백 유지\n- 충분한 본문 내용으로 독자에게 가치 있는 정보 제공\n- 여러 섹션과 소제목을 활용하여 내용을 풍부하게 구성\n- **섹션 제목은 '도입부', '본문', '결론' 같은 일반적인 단어를 사용하지 말고, 콘텐츠 내용에 맞는 구체적이고 자연스러운 제목을 사용하세요** (예: '아롱하다의 특별한 메뉴', '맛의 비밀', '위치 및 예약 안내' 등)\n- **이미지 설명을 본문에 포함할 때는 'Caption:', '**Caption:**', '이미지 설명:' 같은 라벨을 사용하지 말고, 자연스러운 문장으로 이미지 내용을 설명하세요**`
     );
   }
 

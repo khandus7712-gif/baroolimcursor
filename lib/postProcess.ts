@@ -60,13 +60,22 @@ export async function runPostProcess(text: string, options: PostProcessOptions):
     intent: options.intent,
   });
 
-  // 4. 길이 제한 확인 및 조정
+  // 4. 최소 글자 수 확인 (블로그 플랫폼)
+  if (options.platform.id === 'blog') {
+    const minChars = 1500;
+    const textLength = processedText.replace(/\s/g, '').length; // 공백 제외한 글자 수
+    if (textLength < minChars) {
+      warnings.push(`경고: 블로그 콘텐츠가 최소 요구 글자 수(${minChars}자)보다 짧습니다. 현재: ${textLength}자`);
+    }
+  }
+
+  // 5. 길이 제한 확인 및 조정
   if (processedText.length > options.platform.maxChars) {
     processedText = truncateText(processedText, options.platform.maxChars);
     warnings.push(`Content truncated to ${options.platform.maxChars} characters`);
   }
 
-  // 5. 플랫폼별 포맷팅 적용
+  // 6. 플랫폼별 포맷팅 적용
   processedText = applyPlatformFormatting(processedText, options.platform);
 
   return {

@@ -5,12 +5,16 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const apiKey = process.env.GOOGLE_API_KEY;
-if (!apiKey) {
-  throw new Error('GOOGLE_API_KEY is not set');
+/**
+ * Google AI 클라이언트 가져오기 (런타임에만 초기화)
+ */
+function getGenAI() {
+  const apiKey = process.env.GOOGLE_API_KEY;
+  if (!apiKey) {
+    throw new Error('GOOGLE_API_KEY is not set');
+  }
+  return new GoogleGenerativeAI(apiKey);
 }
-
-const genAI = new GoogleGenerativeAI(apiKey);
 
 /**
  * 텍스트 콘텐츠 생성
@@ -23,6 +27,7 @@ export async function generateContent(
   imageBase64?: string
 ): Promise<string> {
   try {
+    const genAI = getGenAI();
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
 
     if (imageBase64) {

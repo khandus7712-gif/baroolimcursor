@@ -19,7 +19,7 @@ export default function RootLayout({
         <Script
           strategy="afterInteractive"
           async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2077503952644064"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3134075533582004"
           crossOrigin="anonymous"
         />
       </head>

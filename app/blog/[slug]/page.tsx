@@ -45,24 +45,26 @@ export default function BlogDetailPage({ params }: BlogPageProps) {
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-16">
-      <Link href="/blog" className="text-sm font-medium text-blue-600">
+    <main className="mx-auto max-w-3xl px-6 py-16 text-gray-900">
+      <div className="mb-8 rounded-3xl bg-white p-8 shadow-lg ring-1 ring-gray-100">
+        <Link href="/blog" className="text-sm font-medium text-blue-600">
         ← 블로그 목록으로
       </Link>
-      <h1 className="mt-6 text-4xl font-bold text-gray-900">{post.title}</h1>
-      <div className="mt-4 space-y-6 text-lg leading-8 text-gray-700">
-        {post.content.map((paragraph, index) => (
-          <p key={index}>{paragraph}</p>
-        ))}
-      </div>
-      <section className="mt-12 rounded-2xl bg-gray-50 p-6">
-        <h2 className="text-xl font-semibold text-gray-900">바로 적용할 인사이트</h2>
-        <ul className="mt-4 list-disc space-y-2 pl-5 text-gray-700">
-          {post.takeaways.map((tip, index) => (
-            <li key={index}>{tip}</li>
+        <h1 className="mt-6 text-4xl font-bold">{post.title}</h1>
+        <div className="mt-4 space-y-6 text-lg leading-8 text-gray-700">
+          {post.content.map((paragraph, index) => (
+            <p key={index}>{paragraph}</p>
           ))}
-        </ul>
-      </section>
+        </div>
+        <section className="mt-12 rounded-2xl bg-gray-50 p-6 text-gray-800">
+          <h2 className="text-xl font-semibold text-gray-900">바로 적용할 인사이트</h2>
+          <ul className="mt-4 list-disc space-y-2 pl-5">
+            {post.takeaways.map((tip, index) => (
+              <li key={index}>{tip}</li>
+            ))}
+          </ul>
+        </section>
+      </div>
     </main>
   );
 }

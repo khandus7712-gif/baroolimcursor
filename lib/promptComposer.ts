@@ -217,7 +217,10 @@ function createContentSection(
 
   // 사용자 메모
   if (content.notes) {
-    sections.push(`User Notes: ${content.notes}`);
+    sections.push(`User Notes (Primary Data - DO NOT override or dilute): ${content.notes}`);
+    sections.push(
+      `**메모 우선 규칙:**\n1. 메모 내용은 전체 글의 최우선 정보이며 Hook, 첫 단락, USP, 사례, 사진 설명에 우선 반영하세요.\n2. 메모의 핵심 문장/키워드/사건을 변형하거나 삭제하지 말고, 의미를 유지한 채 자연스럽게 활용하세요.\n3. 메모 정보는 글의 상단 20% 안에 반드시 등장해야 하며, 충돌되는 템플릿 규칙보다 우선 적용하세요.\n4. 메모에 없는 정보만 템플릿으로 보완하되, 메모 내용과 충돌하거나 덮어쓰지 마세요.\n5. 사진이나 근거 문장이 필요하면 메모 내용을 근거로 연결 문장을 작성하세요.`
+    );
   }
 
   // 키워드

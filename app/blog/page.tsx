@@ -1,36 +1,17 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
-const posts = [
-  {
-    slug: 'generative-ai-marketing-guide',
-    title: '생성형 AI로 만드는 지역 밀착 마케팅 가이드',
-    summary:
-      '동네 맛집, 카페, 교육 서비스까지 AI로 콘텐츠를 자동화하는 방법을 실제 사례 중심으로 정리했습니다.',
-    category: '마케팅 전략',
-    readingTime: '7분',
-    date: '2025-11-24',
-  },
-  {
-    slug: 'content-policy-checklist',
-    title: '애드센스 승인에 필요한 콘텐츠 체크리스트',
-    summary:
-      '광고 심사를 통과한 고객사의 공통점을 분석해 필수 정보, 금지 요소, 카테고리 전략을 안내합니다.',
-    category: '운영 가이드',
-    readingTime: '5분',
-    date: '2025-11-18',
-  },
-  {
-    slug: 'platform-rule-updates',
-    title: '인스타그램·블로그·Threads 플랫폼 규칙 업데이트',
-    summary:
-      '바로올림이 제공하는 플랫폼별 포맷 규칙과 활용 팁을 정리해 제작 효율을 높이는 방법을 공유합니다.',
-    category: '제품 소식',
-    readingTime: '6분',
-    date: '2025-11-10',
-  },
-];
+import { blogPosts } from '@/content/blog/posts';
+
+export const metadata: Metadata = {
+  title: '바로올림 블로그 - AI 마케팅 & 애드센스 인사이트',
+  description:
+    '애드센스 승인용 정보성 콘텐츠, 로컬 SEO 전략, 생성형 AI 활용법을 정기적으로 발행합니다. 구글 정책과 사용자 경험을 충족하는 블로그 운영 팁을 확인하세요.',
+};
 
 export default function BlogPage() {
+  const posts = [...blogPosts].sort((a, b) => (a.date < b.date ? 1 : -1));
+
   return (
     <main className="mx-auto max-w-5xl px-6 py-16">
       <section className="mb-12">

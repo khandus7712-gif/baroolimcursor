@@ -22,6 +22,23 @@ export default function RootLayout({
         <Script
           strategy="afterInteractive"
           async
+          src="https://www.googletagmanager.com/gtag/js?id=G-WVK7QKDXX9"
+        />
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-WVK7QKDXX9');
+            `,
+          }}
+        />
+        <Script
+          strategy="afterInteractive"
+          async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3134075533582004"
           crossOrigin="anonymous"
         />

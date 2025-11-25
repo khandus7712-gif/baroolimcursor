@@ -18,6 +18,7 @@ export default function RootLayout({
       <head>
         <meta name="google-site-verification" content="BjPOGJAR6xrQN_-1KLoJyCa054ZPtaUOqVAgEcKlTWY" />
         <meta name="naver-site-verification" content="6112b4d3c044559e1fcb1b4bd613506cf7f21014" />
+        <link rel="alternate" type="application/rss+xml" title="바로올림 RSS 피드" href="https://baroolim.com/feed.xml" />
         <Script
           strategy="afterInteractive"
           async

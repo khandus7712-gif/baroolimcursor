@@ -4,6 +4,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 import { loadDomainProfile, loadPlatformTemplate } from '@/lib/profileLoader';
 import { composePrompt, createImageAnalysisPrompt } from '@/lib/promptComposer';
 import { generateContent } from '@/lib/ai';
@@ -13,6 +16,140 @@ import { getPlugins } from '@/plugins/hashtag';
 
 export async function POST(request: NextRequest) {
   try {
+    // 사용자 인증 확인
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: '로그인이 필요합니다.' },
+        { status: 401 }
+      );
+    }
+
+    const userId = session.user.id;
+
+    // 사용자 정보 조회 (플랜 및 생성 횟수 확인)
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        plan: true,
+        totalGenerations: true,
+        dailyGenerationCount: true,
+        lastGenerationDate: true,
+        planExpiry: true,
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: '사용자 정보를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    // 단건 구매 결제 내역 확인 (사용하지 않은 단건 구매가 있는지)
+    const unusedSinglePayment = await prisma.payment.findFirst({
+      where: {
+        userId,
+        planId: 'SINGLE_CONTENT',
+        status: 'COMPLETED',
+        // metadata에 used가 없거나 false인 경우만
+        OR: [
+          { metadata: null },
+          { metadata: { path: ['used'], equals: false } },
+          { metadata: { path: ['used'], equals: null } },
+        ],
+      },
+      orderBy: {
+        paidAt: 'desc',
+      },
+    });
+
+    // 단건 구매가 있으면 사용 가능 (플랜 제한 무시)
+    let hasSingleContent = !!unusedSinglePayment;
+
+    // FREE 플랜인 경우 5회 제한 체크 (단건 구매가 없을 때만)
+    if (user.plan === 'FREE' && !hasSingleContent) {
+      const FREE_LIMIT = 5;
+      if (user.totalGenerations >= FREE_LIMIT) {
+        return NextResponse.json(
+          { 
+            error: `무료 플랜은 평생 5회까지만 생성 가능합니다. (현재: ${user.totalGenerations}회)`,
+            limitReached: true,
+            currentCount: user.totalGenerations,
+            limit: FREE_LIMIT,
+          },
+          { status: 403 }
+        );
+      }
+    }
+
+    // 유료 플랜인 경우 만료일 및 일일 제한 체크
+    if (user.plan !== 'FREE') {
+      // 플랜 만료 체크
+      if (user.planExpiry) {
+        const now = new Date();
+        if (new Date(user.planExpiry) < now) {
+          // 플랜이 만료된 경우 FREE로 다운그레이드
+          await prisma.user.update({
+            where: { id: userId },
+            data: {
+              plan: 'FREE',
+              planExpiry: null,
+            },
+          });
+          
+          return NextResponse.json(
+            { 
+              error: '구독이 만료되었습니다. 무료 플랜으로 전환되었습니다. (평생 5회 제한)',
+              planExpired: true,
+              newPlan: 'FREE',
+            },
+            { status: 403 }
+          );
+        }
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const lastGenDate = user.lastGenerationDate ? new Date(user.lastGenerationDate) : null;
+      const isNewDay = !lastGenDate || lastGenDate < today;
+
+      // 일일 제한 설정
+      const dailyLimits: Record<string, number> = {
+        BASIC: 3,
+        PRO: 10,
+        ENTERPRISE: 30,
+      };
+
+      const dailyLimit = dailyLimits[user.plan] || 0;
+
+      if (isNewDay) {
+        // 새 날이면 카운트 리셋
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            dailyGenerationCount: 0,
+            lastGenerationDate: today,
+          },
+        });
+        user.dailyGenerationCount = 0;
+      }
+
+      if (user.dailyGenerationCount >= dailyLimit) {
+        return NextResponse.json(
+          { 
+            error: `${user.plan} 플랜은 하루 ${dailyLimit}회까지만 생성 가능합니다. (현재: ${user.dailyGenerationCount}회)`,
+            limitReached: true,
+            currentCount: user.dailyGenerationCount,
+            limit: dailyLimit,
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     // Parse FormData
     const formData = await request.formData();
     
@@ -150,6 +287,48 @@ export async function POST(request: NextRequest) {
       link: link || undefined,
     });
     
+    // 단건 구매 사용 처리
+    if (hasSingleContent && unusedSinglePayment) {
+      // 단건 구매 사용 표시 (metadata에 사용 여부 저장)
+      await prisma.payment.update({
+        where: { id: unusedSinglePayment.id },
+        data: {
+          metadata: {
+            ...(unusedSinglePayment.metadata as any || {}),
+            used: true,
+            usedAt: new Date().toISOString(),
+          },
+        },
+      });
+    } else {
+      // 일반 플랜 생성 횟수 업데이트
+      if (user.plan === 'FREE') {
+        // FREE 플랜: totalGenerations 증가
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            totalGenerations: {
+              increment: 1,
+            },
+          },
+        });
+      } else {
+        // 유료 플랜: dailyGenerationCount 증가 및 lastGenerationDate 업데이트
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            dailyGenerationCount: {
+              increment: 1,
+            },
+            lastGenerationDate: today,
+          },
+        });
+      }
+    }
+
     // Build response
     const result = {
       output: postProcessResult.output,

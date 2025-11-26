@@ -182,13 +182,15 @@ function PaymentContent() {
 
         {!selectedPlan ? (
           /* 플랜 선택 */
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {PLANS.map((plan) => (
               <div
                 key={plan.id}
                 className={`bg-white/10 backdrop-blur-xl rounded-3xl border-2 p-8 relative ${
                   plan.popular 
                     ? 'border-brand-neon-purple bg-brand-neon-purple/5 scale-105'
+                    : plan.id === 'SINGLE_CONTENT'
+                    ? 'border-green-500/50 bg-green-500/5'
                     : 'border-white/20'
                 }`}
               >
@@ -197,13 +199,16 @@ function PaymentContent() {
                     인기
                   </div>
                 )}
+                {plan.id === 'SINGLE_CONTENT' && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-green-500 px-6 py-2 rounded-full text-white font-bold text-sm">
+                    NEW
+                  </div>
+                )}
                 
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-black text-white mb-2">{plan.name}</h3>
                   <div className="text-4xl font-black text-brand-neon-purple mb-2">
-                    {plan.billingType === 'monthly'
-                      ? `₩${(plan.price / 1000).toFixed(0)}K`
-                      : `₩${plan.price.toLocaleString()}`}
+                    ₩{plan.price.toLocaleString()}
                   </div>
                   <div className="text-white/60 text-sm">
                     {plan.billingType === 'monthly' ? '/월' : '한 건당'}
@@ -224,10 +229,12 @@ function PaymentContent() {
                   className={`w-full py-4 rounded-xl font-bold transition-all ${
                     plan.popular
                       ? 'bg-gradient-to-r from-brand-neon-purple to-brand-neon-pink text-white hover:shadow-lg'
+                      : plan.id === 'SINGLE_CONTENT'
+                      ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:shadow-lg'
                       : 'bg-white/10 text-white hover:bg-white/20'
                   }`}
                 >
-                  선택하기
+                  {plan.id === 'SINGLE_CONTENT' ? '990원 구매하기' : '선택하기'}
                 </button>
               </div>
             ))}

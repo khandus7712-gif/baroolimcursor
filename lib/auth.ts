@@ -49,18 +49,44 @@ export const authOptions: NextAuthOptions = {
 
         // 사용자가 없으면 자동 생성 (빠른 온보딩)
         if (!user) {
+          // 환경 변수로 지정된 관리자 이메일이면 자동으로 ADMIN으로 설정
+          const adminEmail = process.env.ADMIN_EMAIL;
+          const isAdmin = adminEmail && credentials.email === adminEmail;
+          
           user = await prisma.user.create({
             data: {
               email: credentials.email,
               name: credentials.email.split('@')[0],
+              role: isAdmin ? 'ADMIN' : 'USER',
             },
           });
+        } else {
+          // 기존 사용자인 경우, 환경 변수로 지정된 관리자 이메일이면 ADMIN으로 업데이트
+          const adminEmail = process.env.ADMIN_EMAIL;
+          if (adminEmail && credentials.email === adminEmail && user.role !== 'ADMIN') {
+            user = await prisma.user.update({
+              where: { email: credentials.email },
+              data: { role: 'ADMIN' },
+            });
+          }
         }
 
         return user;
       },
     }),
   ],
+  events: {
+    async signIn({ user, account, profile }) {
+      // 환경 변수로 지정된 관리자 이메일이면 자동으로 ADMIN으로 설정
+      const adminEmail = process.env.ADMIN_EMAIL;
+      if (adminEmail && user.email === adminEmail) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { role: 'ADMIN' },
+        });
+      }
+    },
+  },
   callbacks: {
     async session({ session, token, user }) {
       // 세션에 userId 추가
@@ -72,6 +98,7 @@ export const authOptions: NextAuthOptions = {
           where: { id: session.user.id },
           select: {
             plan: true,
+            role: true,
             totalGenerations: true,
             dailyGenerationCount: true,
           },
@@ -79,6 +106,7 @@ export const authOptions: NextAuthOptions = {
         
         if (dbUser) {
           session.user.plan = dbUser.plan;
+          session.user.role = dbUser.role;
           session.user.totalGenerations = dbUser.totalGenerations;
           session.user.dailyGenerationCount = dbUser.dailyGenerationCount;
         }

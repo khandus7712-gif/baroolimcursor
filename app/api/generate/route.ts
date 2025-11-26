@@ -167,7 +167,17 @@ export async function POST(request: NextRequest) {
     
   } catch (error) {
     console.error('Error generating content:', error);
-    const errorMessage = error instanceof Error ? error.message : '콘텐츠 생성에 실패했습니다.';
+    
+    let errorMessage = '콘텐츠 생성에 실패했습니다.';
+    if (error instanceof Error) {
+      // 환경 변수 관련 에러를 더 명확하게 표시
+      if (error.message.includes('GOOGLE_API_KEY')) {
+        errorMessage = '서버 설정 오류: Google AI API 키가 설정되지 않았습니다. 관리자에게 문의하세요.';
+      } else {
+        errorMessage = error.message;
+      }
+    }
+    
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }

@@ -49,22 +49,40 @@ interface WaitlistData {
   notified: boolean;
 }
 
+interface PaymentData {
+  id: string;
+  orderId: string;
+  userId: string;
+  userEmail: string;
+  userName: string | null;
+  planId: string;
+  planName: string;
+  amount: number;
+  status: string;
+  paidAt: string | null;
+  createdAt: string;
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [users, setUsers] = useState<UserData[]>([]);
   const [waitlist, setWaitlist] = useState<WaitlistData[]>([]);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'waitlist'>('overview');
+  const [payments, setPayments] = useState<PaymentData[]>([]);
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'waitlist' | 'payments'>('overview');
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // 인증 체크
+  // 인증 및 권한 체크
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login?callbackUrl=/admin/dashboard');
+    } else if (status === 'authenticated' && session?.user) {
+      // 관리자 권한 체크는 API에서 처리하지만, 클라이언트에서도 확인
+      fetchDashboardData();
     }
-  }, [status, router]);
+  }, [status, router, session]);
 
   // 데이터 로드
   useEffect(() => {
@@ -82,6 +100,7 @@ export default function AdminDashboard() {
         setStats(data.stats);
         setUsers(data.users);
         setWaitlist(data.waitlist);
+        setPayments(data.payments || []);
       }
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
@@ -167,6 +186,16 @@ export default function AdminDashboard() {
             }`}
           >
             🎉 사전예약 ({waitlist.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('payments')}
+            className={`px-6 py-3 rounded-xl font-bold transition-all ${
+              activeTab === 'payments'
+                ? 'bg-gradient-to-r from-brand-neon-purple to-brand-neon-pink text-white shadow-lg'
+                : 'bg-white/10 text-white/70 hover:bg-white/20'
+            }`}
+          >
+            💳 결제 내역 ({payments.length})
           </button>
         </div>
 
@@ -444,6 +473,110 @@ export default function AdminDashboard() {
               <div className="text-center py-20 text-white/60">
                 <Calendar className="w-16 h-16 mx-auto mb-4 opacity-50" />
                 <p className="text-lg">아직 사전예약자가 없습니다</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 결제 내역 탭 */}
+        {activeTab === 'payments' && (
+          <div className="space-y-6">
+            {/* 검색 및 필터 */}
+            <div className="flex items-center gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="이메일, 주문번호, 플랜명으로 검색..."
+                  className="w-full bg-white/10 border border-white/20 rounded-xl px-12 py-3 text-white placeholder-white/40 focus:outline-none focus:border-brand-neon-purple"
+                />
+              </div>
+              <button
+                onClick={() => exportToCSV('users')}
+                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-6 py-3 rounded-xl text-white transition-all"
+              >
+                <Download className="w-5 h-5" />
+                CSV 내보내기
+              </button>
+            </div>
+
+            {/* 결제 내역 테이블 */}
+            <div className="bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 overflow-hidden">
+              <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <table className="w-full">
+                  <thead className="bg-white/5">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-white/80 font-semibold">주문번호</th>
+                      <th className="px-6 py-4 text-left text-white/80 font-semibold">회원</th>
+                      <th className="px-6 py-4 text-left text-white/80 font-semibold">플랜</th>
+                      <th className="px-6 py-4 text-left text-white/80 font-semibold">금액</th>
+                      <th className="px-6 py-4 text-left text-white/80 font-semibold">상태</th>
+                      <th className="px-6 py-4 text-left text-white/80 font-semibold">결제일</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/10">
+                    {payments
+                      .filter(payment => 
+                        payment.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        payment.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        payment.planName.toLowerCase().includes(searchTerm.toLowerCase())
+                      )
+                      .map((payment) => (
+                        <tr key={payment.id} className="hover:bg-white/5 transition-colors">
+                          <td className="px-6 py-4 text-white font-mono text-sm">{payment.orderId}</td>
+                          <td className="px-6 py-4">
+                            <div className="text-white">{payment.userEmail}</div>
+                            {payment.userName && (
+                              <div className="text-white/60 text-sm">{payment.userName}</div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                              payment.planId === 'BASIC' ? 'bg-blue-500/20 text-blue-300' :
+                              payment.planId === 'PRO' ? 'bg-purple-500/20 text-purple-300' :
+                              payment.planId === 'ENTERPRISE' ? 'bg-yellow-500/20 text-yellow-300' :
+                              'bg-gray-500/20 text-gray-300'
+                            }`}>
+                              {payment.planName}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-white font-bold">
+                            ₩{payment.amount.toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                              payment.status === 'COMPLETED' ? 'bg-green-500/20 text-green-300' :
+                              payment.status === 'PENDING' ? 'bg-yellow-500/20 text-yellow-300' :
+                              payment.status === 'FAILED' ? 'bg-red-500/20 text-red-300' :
+                              payment.status === 'REFUNDED' ? 'bg-gray-500/20 text-gray-300' :
+                              'bg-gray-500/20 text-gray-300'
+                            }`}>
+                              {payment.status === 'COMPLETED' ? '완료' :
+                               payment.status === 'PENDING' ? '대기' :
+                               payment.status === 'FAILED' ? '실패' :
+                               payment.status === 'REFUNDED' ? '환불' :
+                               payment.status === 'CANCELLED' ? '취소' : payment.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-white/60 text-sm">
+                            {payment.paidAt 
+                              ? format(new Date(payment.paidAt), 'yyyy-MM-dd HH:mm', { locale: ko })
+                              : format(new Date(payment.createdAt), 'yyyy-MM-dd HH:mm', { locale: ko })
+                            }
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {payments.length === 0 && (
+              <div className="text-center py-20 text-white/60">
+                <DollarSign className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <p className="text-lg">아직 결제 내역이 없습니다</p>
               </div>
             )}
           </div>

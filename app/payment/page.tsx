@@ -15,6 +15,7 @@ interface Plan {
   id: string;
   name: string;
   price: number;
+  billingType: 'monthly' | 'single';
   dailyLimit: number | null;
   features: string[];
   popular?: boolean;
@@ -22,9 +23,18 @@ interface Plan {
 
 const PLANS: Plan[] = [
   {
+    id: 'SINGLE_CONTENT',
+    name: '단건 콘텐츠',
+    price: 990,
+    billingType: 'single',
+    dailyLimit: null,
+    features: ['원하는 콘텐츠 한 건만 즉시 구매', '결제 후 바로 콘텐츠 생성 가능', '필요할 때마다 유연하게 이용'],
+  },
+  {
     id: 'BASIC',
     name: '베이직',
     price: 29900,
+    billingType: 'monthly',
     dailyLimit: 3,
     features: ['하루 3개 생성', '모든 플랫폼 지원', '고급 AI 기능', '이메일 지원', '예약 발행'],
   },
@@ -32,6 +42,7 @@ const PLANS: Plan[] = [
     id: 'PRO',
     name: '프로',
     price: 49900,
+    billingType: 'monthly',
     dailyLimit: 10,
     features: ['하루 10개 생성', '모든 플랫폼 지원', '프리미엄 AI', '우선 지원', '예약 발행', '분석 리포트'],
     popular: true,
@@ -40,6 +51,7 @@ const PLANS: Plan[] = [
     id: 'ENTERPRISE',
     name: '엔터프라이즈',
     price: 79900,
+    billingType: 'monthly',
     dailyLimit: 30,
     features: ['하루 30개 생성', '무제한 플랫폼', '커스텀 AI', '전담 매니저', '예약 발행', '고급 분석', 'API 제공'],
   },
@@ -121,6 +133,12 @@ function PaymentContent() {
     }
   };
 
+  const priceLabel =
+    selectedPlan?.billingType === 'monthly' ? '월 결제 금액' : '단건 결제 금액';
+  const priceValue = selectedPlan
+    ? `₩${selectedPlan.price.toLocaleString()}`
+    : '';
+
   if (status === 'loading') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-900 flex items-center justify-center">
@@ -183,9 +201,13 @@ function PaymentContent() {
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-black text-white mb-2">{plan.name}</h3>
                   <div className="text-4xl font-black text-brand-neon-purple mb-2">
-                    ₩{(plan.price / 1000).toFixed(0)}K
+                    {plan.billingType === 'monthly'
+                      ? `₩${(plan.price / 1000).toFixed(0)}K`
+                      : `₩${plan.price.toLocaleString()}`}
                   </div>
-                  <div className="text-white/60 text-sm">/월</div>
+                  <div className="text-white/60 text-sm">
+                    {plan.billingType === 'monthly' ? '/월' : '한 건당'}
+                  </div>
                 </div>
 
                 <div className="space-y-3 mb-8">
@@ -240,9 +262,9 @@ function PaymentContent() {
                 </div>
 
                 <div className="flex items-center justify-between pt-4 border-t border-white/10">
-                  <span className="text-white text-lg font-semibold">월 결제 금액</span>
+                  <span className="text-white text-lg font-semibold">{priceLabel}</span>
                   <span className="text-3xl font-black text-brand-neon-purple">
-                    ₩{selectedPlan.price.toLocaleString()}
+                    {priceValue}
                   </span>
                 </div>
               </div>

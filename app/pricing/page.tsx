@@ -161,7 +161,7 @@ export default function PricingPage() {
           <p className="text-xl text-white/70 mb-8">
             복잡한 계산 없이, 딱 필요한 만큼만 사용하세요
           </p>
-          <div className="flex flex-wrap justify-center gap-4 text-sm">
+          <div className="flex flex-wrap justify-center gap-4 text-sm mb-6">
             <div className="bg-white/5 px-6 py-3 rounded-full border border-white/20">
               ✅ 언제든 해지 가능
             </div>
@@ -171,6 +171,12 @@ export default function PricingPage() {
             <div className="bg-white/5 px-6 py-3 rounded-full border border-white/20">
               ✅ 환불 보장 (7일 이내)
             </div>
+          </div>
+          <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-xl p-4 max-w-2xl mx-auto">
+            <p className="text-sm text-white/90 text-center">
+              <strong>서비스 제공기간 안내:</strong> 결제 시점부터 구독 기간 동안 서비스가 제공됩니다. 
+              월간 구독의 경우 결제일로부터 30일간, 단건 구매의 경우 구매 즉시 1회 생성 서비스가 제공됩니다.
+            </p>
           </div>
         </div>
 
@@ -199,12 +205,25 @@ export default function PricingPage() {
                   <Icon className="w-12 h-12 mb-4" />
                   <h3 className="text-2xl font-black mb-2">{plan.name}</h3>
                   <p className="text-white/80 text-sm mb-4">{plan.description}</p>
-                  <div className="flex items-baseline gap-2">
+                  <div className="flex items-baseline gap-2 mb-3">
                     <span className="text-4xl font-black">{plan.price}</span>
                     {plan.period && (
                       <span className="text-white/70">/ {plan.period}</span>
                     )}
                   </div>
+                  {plan.id === 'single' ? (
+                    <p className="text-xs text-white/70 bg-black/20 rounded-lg p-2">
+                      서비스 제공기간: 구매 즉시 1회 생성
+                    </p>
+                  ) : plan.id === 'free' ? (
+                    <p className="text-xs text-white/70 bg-black/20 rounded-lg p-2">
+                      서비스 제공기간: 평생 이용 가능
+                    </p>
+                  ) : (
+                    <p className="text-xs text-white/70 bg-black/20 rounded-lg p-2">
+                      서비스 제공기간: 결제일로부터 30일간
+                    </p>
+                  )}
                 </div>
 
                 {/* 기능 목록 */}

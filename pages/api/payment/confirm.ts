@@ -96,18 +96,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
 
-    // TODO: 결제 내역을 DB에 저장
-    // await prisma.payment.create({
-    //   data: {
-    //     userId: session.user.id,
-    //     orderId,
-    //     paymentKey,
-    //     amount,
-    //     planId,
-    //     status: 'COMPLETED',
-    //     paidAt: new Date(paymentData.approvedAt),
-    //   },
-    // });
+    // 결제 내역을 DB에 저장
+    await prisma.payment.create({
+      data: {
+        userId: session.user.id,
+        orderId,
+        paymentKey,
+        planId,
+        planName: planInfo.name,
+        amount,
+        status: 'COMPLETED',
+        paidAt: new Date(paymentData.approvedAt),
+        metadata: paymentData as any,
+      },
+    });
 
     return res.status(200).json({
       success: true,

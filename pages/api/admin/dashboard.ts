@@ -20,12 +20,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ error: '로그인이 필요합니다.' });
     }
 
-    // TODO: 실제 환경에서는 관리자 권한 체크 필요
-    // 현재는 로그인한 모든 사용자가 접근 가능
-    // const isAdmin = session.user.role === 'ADMIN';
-    // if (!isAdmin) {
-    //   return res.status(403).json({ error: '권한이 없습니다.' });
-    // }
+    // 관리자 권한 체크
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true },
+    });
+
+    if (!user || user.role !== 'ADMIN') {
+      return res.status(403).json({ error: '관리자 권한이 필요합니다.' });
+    }
 
     // 통계 데이터 수집
     const totalUsers = await prisma.user.count();
@@ -81,8 +84,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
 
-    // 월 매출 (결제 시스템 연동 전까지는 0)
-    const monthlyRevenue = 0;
+    // 월 매출 계산 (이번 달 완료된 결제 합계)
+    const thisMonthStart = new Date();
+    thisMonthStart.setDate(1);
+    thisMonthStart.setHours(0, 0, 0, 0);
+    
+    const monthlyPayments = await prisma.payment.aggregate({
+      where: {
+        status: 'COMPLETED',
+        paidAt: {
+          gte: thisMonthStart,
+        },
+      },
+      _sum: {
+        amount: true,
+      },
+    });
+    const monthlyRevenue = monthlyPayments._sum.amount || 0;
+
+    // 결제 내역 (최신순, 상위 50개)
+    const payments = await prisma.payment.findMany({
+      take: 50,
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        user: {
+          select: {
+            email: true,
+            name: true,
+          },
+        },
+      },
+    });
 
     return res.status(200).json({
       stats: {
@@ -99,6 +133,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         email: user.email || 'anonymous',
       })),
       waitlist,
+      payments: payments.map(payment => ({
+        id: payment.id,
+        orderId: payment.orderId,
+        userId: payment.userId,
+        userEmail: payment.user.email || 'anonymous',
+        userName: payment.user.name,
+        planId: payment.planId,
+        planName: payment.planName,
+        amount: payment.amount,
+        status: payment.status,
+        paidAt: payment.paidAt,
+        createdAt: payment.createdAt,
+      })),
     });
   } catch (error) {
     console.error('Dashboard API error:', error);

@@ -9,6 +9,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 const PLANS: Record<string, { name: string; price: number }> = {
+  SINGLE_CONTENT: { name: '단건 콘텐츠', price: 990 },
   BASIC: { name: '베이직 플랜', price: 29900 },
   PRO: { name: '프로 플랜', price: 49900 },
   ENTERPRISE: { name: '엔터프라이즈 플랜', price: 79900 },

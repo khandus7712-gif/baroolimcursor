@@ -37,147 +37,112 @@ export async function generateTossPaymentFlowPPT(
   const headerText = '토스페이먼츠 결제경로 파일(심사용)';
 
   // ① 가맹점 정보 기재 (필수 텍스트 페이지)
-  pptx.addSlide({
-    masterName: 'MASTER_SLIDE',
-    background: { color: 'FFFFFF' },
-    objects: [
-      {
-        text: '① 가맹점 정보',
-        options: {
-          x: 0.5,
-          y: 0.3,
-          w: 9,
-          h: 0.8,
-          fontSize: 36,
-          bold: true,
-          color: '1F2937',
-          align: 'left',
-        },
-      },
-      {
-        text: '아래는 토스페이먼츠 결제경로 심사를 위한 가맹점 기본 정보입니다.',
-        options: {
-          x: 0.5,
-          y: 1.2,
-          w: 9,
-          h: 0.5,
-          fontSize: 18,
-          color: '6B7280',
-          align: 'left',
-        },
-      },
-      {
-        text: [
-          { text: '상호명: ', options: { bold: true, fontSize: 20 } },
-          { text: merchantInfo.상호명, options: { fontSize: 20 } },
-        ],
-        options: {
-          x: 0.5,
-          y: 2.0,
-          w: 9,
-          h: 0.6,
-          align: 'left',
-        },
-      },
-      {
-        text: [
-          { text: '사업자등록번호: ', options: { bold: true, fontSize: 20 } },
-          { text: merchantInfo.사업자등록번호, options: { fontSize: 20 } },
-        ],
-        options: {
-          x: 0.5,
-          y: 2.7,
-          w: 9,
-          h: 0.6,
-          align: 'left',
-        },
-      },
-      {
-        text: [
-          { text: '대표자명: ', options: { bold: true, fontSize: 20 } },
-          { text: merchantInfo.대표자명, options: { fontSize: 20 } },
-        ],
-        options: {
-          x: 0.5,
-          y: 3.4,
-          w: 9,
-          h: 0.6,
-          align: 'left',
-        },
-      },
-      {
-        text: [
-          { text: '사업장 주소: ', options: { bold: true, fontSize: 20 } },
-          { text: merchantInfo.사업장주소, options: { fontSize: 20 } },
-        ],
-        options: {
-          x: 0.5,
-          y: 4.1,
-          w: 9,
-          h: 0.6,
-          align: 'left',
-        },
-      },
-      {
-        text: [
-          { text: '홈페이지 URL: ', options: { bold: true, fontSize: 20 } },
-          { text: merchantInfo.홈페이지URL, options: { fontSize: 20, color: '0066CC' } },
-        ],
-        options: {
-          x: 0.5,
-          y: 4.8,
-          w: 9,
-          h: 0.6,
-          align: 'left',
-        },
-      },
-      {
-        text: [
-          { text: '고객센터 연락처: ', options: { bold: true, fontSize: 20 } },
-          { text: merchantInfo.고객센터연락처, options: { fontSize: 20 } },
-        ],
-        options: {
-          x: 0.5,
-          y: 5.5,
-          w: 9,
-          h: 0.6,
-          align: 'left',
-        },
-      },
-      {
-        text: [
-          { text: '테스트 ID: ', options: { bold: true, fontSize: 20 } },
-          { text: merchantInfo.테스트ID || '테스트 계정 없음', options: { fontSize: 20 } },
-        ],
-        options: {
-          x: 0.5,
-          y: 6.2,
-          w: 9,
-          h: 0.6,
-          align: 'left',
-        },
-      },
-      {
-        text: [
-          { text: '테스트 PW: ', options: { bold: true, fontSize: 20 } },
-          { text: merchantInfo.테스트PW || '테스트 계정 없음', options: { fontSize: 20 } },
-        ],
-        options: {
-          x: 0.5,
-          y: 6.9,
-          w: 9,
-          h: 0.6,
-          align: 'left',
-        },
-      },
-    ],
+  const slide1 = pptx.addSlide();
+  slide1.background = { color: 'FFFFFF' };
+  slide1.addText('① 가맹점 정보', {
+    x: 0.5,
+    y: 0.3,
+    w: 9,
+    h: 0.8,
+    fontSize: 36,
+    bold: true,
+    color: '1F2937',
+    align: 'left',
+  });
+  slide1.addText('아래는 토스페이먼츠 결제경로 심사를 위한 가맹점 기본 정보입니다.', {
+    x: 0.5,
+    y: 1.2,
+    w: 9,
+    h: 0.5,
+    fontSize: 18,
+    color: '6B7280',
+    align: 'left',
+  });
+  slide1.addText([
+    { text: '상호명: ', options: { bold: true, fontSize: 20 } },
+    { text: merchantInfo.상호명, options: { fontSize: 20 } },
+  ], {
+    x: 0.5,
+    y: 2.0,
+    w: 9,
+    h: 0.6,
+    align: 'left',
+  });
+  slide1.addText([
+    { text: '사업자등록번호: ', options: { bold: true, fontSize: 20 } },
+    { text: merchantInfo.사업자등록번호, options: { fontSize: 20 } },
+  ], {
+    x: 0.5,
+    y: 2.7,
+    w: 9,
+    h: 0.6,
+    align: 'left',
+  });
+  slide1.addText([
+    { text: '대표자명: ', options: { bold: true, fontSize: 20 } },
+    { text: merchantInfo.대표자명, options: { fontSize: 20 } },
+  ], {
+    x: 0.5,
+    y: 3.4,
+    w: 9,
+    h: 0.6,
+    align: 'left',
+  });
+  slide1.addText([
+    { text: '사업장 주소: ', options: { bold: true, fontSize: 20 } },
+    { text: merchantInfo.사업장주소, options: { fontSize: 20 } },
+  ], {
+    x: 0.5,
+    y: 4.1,
+    w: 9,
+    h: 0.6,
+    align: 'left',
+  });
+  slide1.addText([
+    { text: '홈페이지 URL: ', options: { bold: true, fontSize: 20 } },
+    { text: merchantInfo.홈페이지URL, options: { fontSize: 20, color: '0066CC' } },
+  ], {
+    x: 0.5,
+    y: 4.8,
+    w: 9,
+    h: 0.6,
+    align: 'left',
+  });
+  slide1.addText([
+    { text: '고객센터 연락처: ', options: { bold: true, fontSize: 20 } },
+    { text: merchantInfo.고객센터연락처, options: { fontSize: 20 } },
+  ], {
+    x: 0.5,
+    y: 5.5,
+    w: 9,
+    h: 0.6,
+    align: 'left',
+  });
+  slide1.addText([
+    { text: '테스트 ID: ', options: { bold: true, fontSize: 20 } },
+    { text: merchantInfo.테스트ID || '테스트 계정 없음', options: { fontSize: 20 } },
+  ], {
+    x: 0.5,
+    y: 6.2,
+    w: 9,
+    h: 0.6,
+    align: 'left',
+  });
+  slide1.addText([
+    { text: '테스트 PW: ', options: { bold: true, fontSize: 20 } },
+    { text: merchantInfo.테스트PW || '테스트 계정 없음', options: { fontSize: 20 } },
+  ], {
+    x: 0.5,
+    y: 6.9,
+    w: 9,
+    h: 0.6,
+    align: 'left',
   });
 
   // ② 하단 정보 캡처 페이지
-  pptx.addSlide({
-    masterName: 'MASTER_SLIDE',
-    background: { color: 'FFFFFF' },
-    objects: [
+  const slide2 = pptx.addSlide();
+  slide2.background = { color: 'FFFFFF' };
+  const slide2Objects = [
       {
         text: '② 하단 사업자 정보(푸터) 캡처',
         options: {
@@ -239,14 +204,19 @@ export async function generateTossPaymentFlowPPT(
           align: 'left',
         },
       },
-    ],
+    ];
+  slide2Objects.forEach((obj: any) => {
+    if (obj.text) {
+      slide2.addText(obj.text, obj.options || {});
+    } else if (obj.rect) {
+      slide2.addShape(pptx.ShapeType.rect, obj.rect);
+    }
   });
 
   // ③ 환불 규정 캡처 페이지
-  pptx.addSlide({
-    masterName: 'MASTER_SLIDE',
-    background: { color: 'FFFFFF' },
-    objects: [
+  const slide3 = pptx.addSlide();
+  slide3.background = { color: 'FFFFFF' };
+  const slide3Objects = [
       {
         text: '③ 환불 및 교환 규정 캡처',
         options: {
@@ -312,10 +282,9 @@ export async function generateTossPaymentFlowPPT(
   });
 
   // ④ 로그인 / 회원가입 경로 페이지
-  pptx.addSlide({
-    masterName: 'MASTER_SLIDE',
-    background: { color: 'FFFFFF' },
-    objects: [
+  const slide4 = pptx.addSlide();
+  slide4.background = { color: 'FFFFFF' };
+  const slide4Objects = [
       {
         text: '④ 로그인 / 회원가입 / 비회원 구매 경로',
         options: {
@@ -453,10 +422,9 @@ export async function generateTossPaymentFlowPPT(
   });
 
   // ⑤ 상품 선택 과정 페이지
-  pptx.addSlide({
-    masterName: 'MASTER_SLIDE',
-    background: { color: 'FFFFFF' },
-    objects: [
+  const slide5 = pptx.addSlide();
+  slide5.background = { color: 'FFFFFF' };
+  const slide5Objects = [
       {
         text: '⑤ 상품 선택 과정',
         options: {
@@ -558,10 +526,9 @@ export async function generateTossPaymentFlowPPT(
   });
 
   // 장바구니 화면 추가
-  pptx.addSlide({
-    masterName: 'MASTER_SLIDE',
-    background: { color: 'FFFFFF' },
-    objects: [
+  const slide5_2 = pptx.addSlide();
+  slide5_2.background = { color: 'FFFFFF' };
+  const slide5_2Objects = [
       {
         text: '⑤-2 장바구니 화면',
         options: {
@@ -614,10 +581,9 @@ export async function generateTossPaymentFlowPPT(
   });
 
   // ⑥ 주문서 & 결제수단 선택
-  pptx.addSlide({
-    masterName: 'MASTER_SLIDE',
-    background: { color: 'FFFFFF' },
-    objects: [
+  const slide6 = pptx.addSlide();
+  slide6.background = { color: 'FFFFFF' };
+  const slide6Objects = [
       {
         text: '⑥ 주문서 & 결제수단 선택',
         options: {
@@ -719,10 +685,9 @@ export async function generateTossPaymentFlowPPT(
   });
 
   // ⑦ 카드 결제 경로 페이지 (필수)
-  pptx.addSlide({
-    masterName: 'MASTER_SLIDE',
-    background: { color: 'FFFFFF' },
-    objects: [
+  const slide7 = pptx.addSlide();
+  slide7.background = { color: 'FFFFFF' };
+  const slide7Objects = [
       {
         text: '⑦ 카드 결제 흐름 전체',
         options: {
@@ -824,10 +789,9 @@ export async function generateTossPaymentFlowPPT(
   });
 
   // 카드 결제 - 본인 인증 화면
-  pptx.addSlide({
-    masterName: 'MASTER_SLIDE',
-    background: { color: 'FFFFFF' },
-    objects: [
+  const slide7_2 = pptx.addSlide();
+  slide7_2.background = { color: 'FFFFFF' };
+  const slide7_2Objects = [
       {
         text: '⑦-2 카드 결제 - 본인 인증',
         options: {
@@ -880,10 +844,9 @@ export async function generateTossPaymentFlowPPT(
   });
 
   // ⑧ 비씨카드 결제창 (해당 시)
-  pptx.addSlide({
-    masterName: 'MASTER_SLIDE',
-    background: { color: 'FFFFFF' },
-    objects: [
+  const slide8 = pptx.addSlide();
+  slide8.background = { color: 'FFFFFF' };
+  const slide8Objects = [
       {
         text: '⑧ 비씨카드 결제창 (해당 시 필수)',
         options: {
@@ -986,10 +949,9 @@ export async function generateTossPaymentFlowPPT(
   });
 
   // ⑨ 정기결제 카드 입력창 (해당 시)
-  pptx.addSlide({
-    masterName: 'MASTER_SLIDE',
-    background: { color: 'FFFFFF' },
-    objects: [
+  const slide9 = pptx.addSlide();
+  slide9.background = { color: 'FFFFFF' };
+  const slide9Objects = [
       {
         text: '⑨ 정기결제 카드 입력창 (해당 시)',
         options: {
@@ -1042,10 +1004,9 @@ export async function generateTossPaymentFlowPPT(
   });
 
   // ⑩ 마지막 종료 페이지
-  pptx.addSlide({
-    masterName: 'MASTER_SLIDE',
-    background: { color: 'FFFFFF' },
-    objects: [
+  const slide10 = pptx.addSlide();
+  slide10.background = { color: 'FFFFFF' };
+  const slide10Objects = [
       {
         text: '감사합니다',
         options: {

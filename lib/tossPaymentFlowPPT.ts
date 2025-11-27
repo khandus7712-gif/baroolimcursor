@@ -278,7 +278,13 @@ export async function generateTossPaymentFlowPPT(
           align: 'left',
         },
       },
-    ],
+    ];
+  slide3Objects.forEach((obj: any) => {
+    if (obj.text) {
+      slide3.addText(obj.text, obj.options || {});
+    } else if (obj.rect) {
+      slide3.addShape(pptx.ShapeType.rect, obj.rect);
+    }
   });
 
   // ④ 로그인 / 회원가입 경로 페이지
@@ -418,7 +424,13 @@ export async function generateTossPaymentFlowPPT(
           valign: 'middle',
         },
       },
-    ],
+    ];
+  slide4Objects.forEach((obj: any) => {
+    if (obj.text) {
+      slide4.addText(obj.text, obj.options || {});
+    } else if (obj.rect) {
+      slide4.addShape(pptx.ShapeType.rect, obj.rect);
+    }
   });
 
   // ⑤ 상품 선택 과정 페이지
@@ -522,7 +534,13 @@ export async function generateTossPaymentFlowPPT(
           valign: 'middle',
         },
       },
-    ],
+    ];
+  slide5Objects.forEach((obj: any) => {
+    if (obj.text) {
+      slide5.addText(obj.text, obj.options || {});
+    } else if (obj.rect) {
+      slide5.addShape(pptx.ShapeType.rect, obj.rect);
+    }
   });
 
   // 장바구니 화면 추가
@@ -577,7 +595,13 @@ export async function generateTossPaymentFlowPPT(
           valign: 'middle',
         },
       },
-    ],
+    ];
+  slide5_2Objects.forEach((obj: any) => {
+    if (obj.text) {
+      slide5_2.addText(obj.text, obj.options || {});
+    } else if (obj.rect) {
+      slide5_2.addShape(pptx.ShapeType.rect, obj.rect);
+    }
   });
 
   // ⑥ 주문서 & 결제수단 선택
@@ -681,7 +705,13 @@ export async function generateTossPaymentFlowPPT(
           valign: 'middle',
         },
       },
-    ],
+    ];
+  slide6Objects.forEach((obj: any) => {
+    if (obj.text) {
+      slide6.addText(obj.text, obj.options || {});
+    } else if (obj.rect) {
+      slide6.addShape(pptx.ShapeType.rect, obj.rect);
+    }
   });
 
   // ⑦ 카드 결제 경로 페이지 (필수)
@@ -785,7 +815,13 @@ export async function generateTossPaymentFlowPPT(
           valign: 'middle',
         },
       },
-    ],
+    ];
+  slide7Objects.forEach((obj: any) => {
+    if (obj.text) {
+      slide7.addText(obj.text, obj.options || {});
+    } else if (obj.rect) {
+      slide7.addShape(pptx.ShapeType.rect, obj.rect);
+    }
   });
 
   // 카드 결제 - 본인 인증 화면
@@ -840,7 +876,13 @@ export async function generateTossPaymentFlowPPT(
           valign: 'middle',
         },
       },
-    ],
+    ];
+  slide7_2Objects.forEach((obj: any) => {
+    if (obj.text) {
+      slide7_2.addText(obj.text, obj.options || {});
+    } else if (obj.rect) {
+      slide7_2.addShape(pptx.ShapeType.rect, obj.rect);
+    }
   });
 
   // ⑧ 비씨카드 결제창 (해당 시)
@@ -945,7 +987,13 @@ export async function generateTossPaymentFlowPPT(
           valign: 'middle',
         },
       },
-    ],
+    ];
+  slide8Objects.forEach((obj: any) => {
+    if (obj.text) {
+      slide8.addText(obj.text, obj.options || {});
+    } else if (obj.rect) {
+      slide8.addShape(pptx.ShapeType.rect, obj.rect);
+    }
   });
 
   // ⑨ 정기결제 카드 입력창 (해당 시)
@@ -1000,7 +1048,13 @@ export async function generateTossPaymentFlowPPT(
           valign: 'middle',
         },
       },
-    ],
+    ];
+  slide9Objects.forEach((obj: any) => {
+    if (obj.text) {
+      slide9.addText(obj.text, obj.options || {});
+    } else if (obj.rect) {
+      slide9.addShape(pptx.ShapeType.rect, obj.rect);
+    }
   });
 
   // ⑩ 마지막 종료 페이지
@@ -1033,7 +1087,13 @@ export async function generateTossPaymentFlowPPT(
           align: 'center',
         },
       },
-    ],
+    ];
+  slide10Objects.forEach((obj: any) => {
+    if (obj.text) {
+      slide10.addText(obj.text, obj.options || {});
+    } else if (obj.rect) {
+      slide10.addShape(pptx.ShapeType.rect, obj.rect);
+    }
   });
 
   // 모든 슬라이드에 헤더 추가

@@ -39,6 +39,15 @@ export async function generateTossPaymentFlowPPT(
   // ① 가맹점 정보 기재 (필수 텍스트 페이지)
   const slide1 = pptx.addSlide();
   slide1.background = { color: 'FFFFFF' };
+  slide1.addText(headerText, {
+    x: 0.5,
+    y: 0.1,
+    w: 9,
+    h: 0.3,
+    fontSize: 12,
+    color: '9CA3AF',
+    align: 'left',
+  });
   slide1.addText('① 가맹점 정보', {
     x: 0.5,
     y: 0.3,
@@ -142,6 +151,15 @@ export async function generateTossPaymentFlowPPT(
   // ② 하단 정보 캡처 페이지
   const slide2 = pptx.addSlide();
   slide2.background = { color: 'FFFFFF' };
+  slide2.addText(headerText, {
+    x: 0.5,
+    y: 0.1,
+    w: 9,
+    h: 0.3,
+    fontSize: 12,
+    color: '9CA3AF',
+    align: 'left',
+  });
   const slide2Objects = [
       {
         text: '② 하단 사업자 정보(푸터) 캡처',
@@ -216,6 +234,15 @@ export async function generateTossPaymentFlowPPT(
   // ③ 환불 규정 캡처 페이지
   const slide3 = pptx.addSlide();
   slide3.background = { color: 'FFFFFF' };
+  slide3.addText(headerText, {
+    x: 0.5,
+    y: 0.1,
+    w: 9,
+    h: 0.3,
+    fontSize: 12,
+    color: '9CA3AF',
+    align: 'left',
+  });
   const slide3Objects = [
       {
         text: '③ 환불 및 교환 규정 캡처',
@@ -290,6 +317,15 @@ export async function generateTossPaymentFlowPPT(
   // ④ 로그인 / 회원가입 경로 페이지
   const slide4 = pptx.addSlide();
   slide4.background = { color: 'FFFFFF' };
+  slide4.addText(headerText, {
+    x: 0.5,
+    y: 0.1,
+    w: 9,
+    h: 0.3,
+    fontSize: 12,
+    color: '9CA3AF',
+    align: 'left',
+  });
   const slide4Objects = [
       {
         text: '④ 로그인 / 회원가입 / 비회원 구매 경로',
@@ -436,6 +472,15 @@ export async function generateTossPaymentFlowPPT(
   // ⑤ 상품 선택 과정 페이지
   const slide5 = pptx.addSlide();
   slide5.background = { color: 'FFFFFF' };
+  slide5.addText(headerText, {
+    x: 0.5,
+    y: 0.1,
+    w: 9,
+    h: 0.3,
+    fontSize: 12,
+    color: '9CA3AF',
+    align: 'left',
+  });
   const slide5Objects = [
       {
         text: '⑤ 상품 선택 과정',
@@ -546,6 +591,15 @@ export async function generateTossPaymentFlowPPT(
   // 장바구니 화면 추가
   const slide5_2 = pptx.addSlide();
   slide5_2.background = { color: 'FFFFFF' };
+  slide5_2.addText(headerText, {
+    x: 0.5,
+    y: 0.1,
+    w: 9,
+    h: 0.3,
+    fontSize: 12,
+    color: '9CA3AF',
+    align: 'left',
+  });
   const slide5_2Objects = [
       {
         text: '⑤-2 장바구니 화면',
@@ -607,6 +661,15 @@ export async function generateTossPaymentFlowPPT(
   // ⑥ 주문서 & 결제수단 선택
   const slide6 = pptx.addSlide();
   slide6.background = { color: 'FFFFFF' };
+  slide6.addText(headerText, {
+    x: 0.5,
+    y: 0.1,
+    w: 9,
+    h: 0.3,
+    fontSize: 12,
+    color: '9CA3AF',
+    align: 'left',
+  });
   const slide6Objects = [
       {
         text: '⑥ 주문서 & 결제수단 선택',
@@ -717,6 +780,15 @@ export async function generateTossPaymentFlowPPT(
   // ⑦ 카드 결제 경로 페이지 (필수)
   const slide7 = pptx.addSlide();
   slide7.background = { color: 'FFFFFF' };
+  slide7.addText(headerText, {
+    x: 0.5,
+    y: 0.1,
+    w: 9,
+    h: 0.3,
+    fontSize: 12,
+    color: '9CA3AF',
+    align: 'left',
+  });
   const slide7Objects = [
       {
         text: '⑦ 카드 결제 흐름 전체',
@@ -827,6 +899,15 @@ export async function generateTossPaymentFlowPPT(
   // 카드 결제 - 본인 인증 화면
   const slide7_2 = pptx.addSlide();
   slide7_2.background = { color: 'FFFFFF' };
+  slide7_2.addText(headerText, {
+    x: 0.5,
+    y: 0.1,
+    w: 9,
+    h: 0.3,
+    fontSize: 12,
+    color: '9CA3AF',
+    align: 'left',
+  });
   const slide7_2Objects = [
       {
         text: '⑦-2 카드 결제 - 본인 인증',
@@ -888,6 +969,15 @@ export async function generateTossPaymentFlowPPT(
   // ⑧ 비씨카드 결제창 (해당 시)
   const slide8 = pptx.addSlide();
   slide8.background = { color: 'FFFFFF' };
+  slide8.addText(headerText, {
+    x: 0.5,
+    y: 0.1,
+    w: 9,
+    h: 0.3,
+    fontSize: 12,
+    color: '9CA3AF',
+    align: 'left',
+  });
   const slide8Objects = [
       {
         text: '⑧ 비씨카드 결제창 (해당 시 필수)',
@@ -999,6 +1089,15 @@ export async function generateTossPaymentFlowPPT(
   // ⑨ 정기결제 카드 입력창 (해당 시)
   const slide9 = pptx.addSlide();
   slide9.background = { color: 'FFFFFF' };
+  slide9.addText(headerText, {
+    x: 0.5,
+    y: 0.1,
+    w: 9,
+    h: 0.3,
+    fontSize: 12,
+    color: '9CA3AF',
+    align: 'left',
+  });
   const slide9Objects = [
       {
         text: '⑨ 정기결제 카드 입력창 (해당 시)',
@@ -1060,6 +1159,15 @@ export async function generateTossPaymentFlowPPT(
   // ⑩ 마지막 종료 페이지
   const slide10 = pptx.addSlide();
   slide10.background = { color: 'FFFFFF' };
+  slide10.addText(headerText, {
+    x: 0.5,
+    y: 0.1,
+    w: 9,
+    h: 0.3,
+    fontSize: 12,
+    color: '9CA3AF',
+    align: 'left',
+  });
   const slide10Objects = [
       {
         text: '감사합니다',
@@ -1094,20 +1202,6 @@ export async function generateTossPaymentFlowPPT(
     } else if (obj.rect) {
       slide10.addShape(pptx.ShapeType.rect, obj.rect);
     }
-  });
-
-  // 모든 슬라이드에 헤더 추가
-  const slides = pptx.slides;
-  slides.forEach((slide) => {
-    slide.addText(headerText, {
-      x: 0.5,
-      y: 0.1,
-      w: 9,
-      h: 0.3,
-      fontSize: 12,
-      color: '9CA3AF',
-      align: 'left',
-    });
   });
 
   // PPTX 파일 생성

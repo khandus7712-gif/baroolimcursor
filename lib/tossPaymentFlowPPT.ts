@@ -1206,7 +1206,7 @@ export async function generateTossPaymentFlowPPT(
 
   // PPTX 파일 생성
   const pptxBuffer = await pptx.write({ outputType: 'nodebuffer' });
-  return Buffer.from(pptxBuffer);
+  return pptxBuffer as Buffer;
 }
 
 

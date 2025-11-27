@@ -48,21 +48,23 @@ export async function POST(request: NextRequest) {
     }
 
     // 단건 구매 결제 내역 확인 (사용하지 않은 단건 구매가 있는지)
-    const unusedSinglePayment = await prisma.payment.findFirst({
+    // 먼저 모든 단건 구매를 가져온 후 JavaScript에서 필터링
+    const singlePayments = await prisma.payment.findMany({
       where: {
         userId,
         planId: 'SINGLE_CONTENT',
         status: 'COMPLETED',
-        // metadata에 used가 없거나 false인 경우만
-        OR: [
-          { metadata: null },
-          { metadata: { path: ['used'], equals: false } },
-          { metadata: { path: ['used'], equals: null } },
-        ],
       },
       orderBy: {
         paidAt: 'desc',
       },
+    });
+
+    // metadata에 used가 없거나 false인 경우만 필터링
+    const unusedSinglePayment = singlePayments.find((payment) => {
+      if (!payment.metadata) return true;
+      const metadata = payment.metadata as any;
+      return !metadata.used || metadata.used === false;
     });
 
     // 단건 구매가 있으면 사용 가능 (플랜 제한 무시)

@@ -5,16 +5,12 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-/**
- * Google AI 클라이언트 가져오기 (런타임에만 초기화)
- */
-function getGenAI() {
-  const apiKey = process.env.GOOGLE_API_KEY;
-  if (!apiKey) {
-    throw new Error('GOOGLE_API_KEY is not set');
-  }
-  return new GoogleGenerativeAI(apiKey);
+const apiKey = process.env.GOOGLE_API_KEY;
+if (!apiKey) {
+  throw new Error('GOOGLE_API_KEY is not set');
 }
+
+const genAI = new GoogleGenerativeAI(apiKey);
 
 /**
  * 텍스트 콘텐츠 생성
@@ -27,17 +23,15 @@ export async function generateContent(
   imageBase64?: string
 ): Promise<string> {
   try {
-    const genAI = getGenAI();
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
 
     if (imageBase64) {
       // 멀티모달 (이미지 + 텍스트)
       // Base64 이미지를 파트로 변환
-      // 주의: Gemini API는 PNG를 지원하지 않으므로 항상 JPEG로 처리
       const imagePart = {
         inlineData: {
           data: imageBase64.replace(/^data:image\/\w+;base64,/, ''),
-          mimeType: 'image/jpeg', // 항상 JPEG로 설정 (PNG 미지원)
+          mimeType: imageBase64.match(/^data:image\/(\w+);base64,/)?.[1] || 'image/jpeg',
         },
       };
 

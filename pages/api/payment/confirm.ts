@@ -8,8 +8,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
-const PLANS: Record<string, { name: string; price: number; plan: string | null }> = {
-  SINGLE_CONTENT: { name: '단건 콘텐츠', price: 990, plan: null }, // 단건 구매는 플랜 변경 없음
+const PLANS: Record<string, { name: string; price: number; plan: string }> = {
   BASIC: { name: '베이직', price: 29900, plan: 'BASIC' },
   PRO: { name: '프로', price: 49900, plan: 'PRO' },
   ENTERPRISE: { name: '엔터프라이즈', price: 79900, plan: 'ENTERPRISE' },
@@ -79,42 +78,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // 단건 구매가 아닌 경우에만 플랜 업데이트
-    if (planInfo.plan) {
-      // 구독 만료일 계산 (1개월 후)
-      const planExpiry = new Date();
-      planExpiry.setMonth(planExpiry.getMonth() + 1);
+    // 구독 만료일 계산 (1개월 후)
+    const planExpiry = new Date();
+    planExpiry.setMonth(planExpiry.getMonth() + 1);
 
-      // 사용자 플랜 업데이트
-      await prisma.user.update({
-        where: {
-          id: session.user.id,
-        },
-        data: {
-          plan: planInfo.plan as any,
-          planExpiry,
-          // 일일 카운트 초기화
-          dailyGenerationCount: 0,
-          lastGenerationDate: new Date(),
-        },
-      });
-    }
-    // 단건 구매(SINGLE_CONTENT)는 플랜을 변경하지 않음 (결제 내역만 저장)
-
-    // 결제 내역을 DB에 저장
-    await prisma.payment.create({
+    // 사용자 플랜 업데이트
+    await prisma.user.update({
+      where: {
+        id: session.user.id,
+      },
       data: {
-        userId: session.user.id,
-        orderId,
-        paymentKey,
-        planId,
-        planName: planInfo.name,
-        amount,
-        status: 'COMPLETED',
-        paidAt: new Date(paymentData.approvedAt),
-        metadata: paymentData as any,
+        plan: planInfo.plan as any,
+        planExpiry,
+        // 일일 카운트 초기화
+        dailyGenerationCount: 0,
+        lastGenerationDate: new Date(),
       },
     });
+
+    // TODO: 결제 내역을 DB에 저장
+    // await prisma.payment.create({
+    //   data: {
+    //     userId: session.user.id,
+    //     orderId,
+    //     paymentKey,
+    //     amount,
+    //     planId,
+    //     status: 'COMPLETED',
+    //     paidAt: new Date(paymentData.approvedAt),
+    //   },
+    // });
 
     return res.status(200).json({
       success: true,

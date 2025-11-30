@@ -59,8 +59,15 @@ export default function HomePage() {
             </button>
             
             {/* 로그인 상태에 따른 조건부 렌더링 */}
-            {status === 'loading' ? (
-              <div className="text-white/60 px-4 py-2 font-medium">...</div>
+            {!mounted || status === 'loading' ? (
+              // 로딩 중이거나 마운트 전에는 로그인 버튼을 즉시 보여줌
+              <button
+                onClick={() => router.push('/login')}
+                className="flex items-center gap-2 text-white/80 hover:text-white transition-colors px-4 py-2 font-medium"
+              >
+                <User className="w-4 h-4" />
+                로그인
+              </button>
             ) : session ? (
               <>
                 {/* 로그인된 경우 */}
@@ -81,8 +88,9 @@ export default function HomePage() {
                 {/* 로그인 안 된 경우 */}
                 <button
                   onClick={() => router.push('/login')}
-                  className="text-white/80 hover:text-white transition-colors px-4 py-2 font-medium"
+                  className="flex items-center gap-2 text-white/80 hover:text-white transition-colors px-4 py-2 font-medium"
                 >
+                  <User className="w-4 h-4" />
                   로그인
                 </button>
               </>
@@ -168,8 +176,9 @@ export default function HomePage() {
               ) : (
                 <button
                   onClick={() => { router.push('/login'); setMobileMenuOpen(false); }}
-                  className="w-full text-left px-4 py-3 hover:bg-white/10 rounded-lg transition-colors text-white font-medium"
+                  className="w-full text-left px-4 py-3 hover:bg-white/10 rounded-lg transition-colors text-white font-medium flex items-center gap-2"
                 >
+                  <User className="w-4 h-4" />
                   로그인
                 </button>
               )}
@@ -569,22 +578,15 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* 사업자정보 (토스페이먼츠 심사용) */}
-          <div className="text-center text-white/60 border-t border-white/10 pt-8 mt-8">
-            <p className="text-base mb-2 font-bold">© 2025 바로올림 | AI 마케팅 콘텐츠 생성 플랫폼</p>
-            <p className="text-sm mb-4">Made with ❤️ by Baroolim Team</p>
-            <div className="bg-white/5 rounded-xl p-6 max-w-2xl mx-auto text-left">
-              <h3 className="text-sm font-bold mb-3 text-white/90">사업자 정보</h3>
-              <div className="space-y-2 text-xs text-white/70">
-                <p><strong className="text-white/90">상호명:</strong> 바디편한</p>
-                <p><strong className="text-white/90">대표자명:</strong> 이주연</p>
-                <p><strong className="text-white/90">사업자등록번호:</strong> 308-32-01281</p>
-                <p><strong className="text-white/90">통신판매업 신고번호:</strong> 2023-창원의창-0642</p>
-                <p><strong className="text-white/90">사업장 주소:</strong> 경상남도 창원시 의창구 북면 동곡로 33, 101동 1304호 (창원무동지구 휴먼빌아파트1단지)</p>
-                <p><strong className="text-white/90">유선번호:</strong> 010-5850-1255</p>
-                <p><strong className="text-white/90">이메일:</strong> pernar.go@gmail.com</p>
-              </div>
-            </div>
+          {/* 저작권 */}
+          <div className="text-center text-white/60">
+            <p className="text-base mb-2">© 2025 바로올림 | AI 마케팅 콘텐츠 생성 플랫폼</p>
+            <p className="text-sm">Made with ❤️ by Baroolim Team</p>
+            <p className="text-xs mt-4 text-white/40">
+              대표: 이주연 | 사업자등록번호: 308-32-01281<br />
+              경남 창원시 의창구 도계동 352-12 203호<br />
+              전화: 010-5850-1255 | 이메일: pernar.go@gmail.com
+            </p>
           </div>
         </div>
       </footer>

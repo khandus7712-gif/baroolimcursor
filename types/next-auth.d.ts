@@ -3,14 +3,13 @@
  */
 
 import { DefaultSession } from 'next-auth';
-import { SubscriptionPlan, UserRole } from '@prisma/client';
+import { SubscriptionPlan } from '@prisma/client';
 
 declare module 'next-auth' {
   interface Session {
     user: {
       id: string;
       plan?: SubscriptionPlan;
-      role?: UserRole;
       totalGenerations?: number;
       dailyGenerationCount?: number;
     } & DefaultSession['user'];
@@ -22,7 +21,6 @@ declare module 'next-auth' {
     name?: string | null;
     image?: string | null;
     plan?: SubscriptionPlan;
-    role?: UserRole;
     totalGenerations?: number;
     dailyGenerationCount?: number;
   }

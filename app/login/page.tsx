@@ -6,7 +6,7 @@
 
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { Sparkles, Mail, Lock, ArrowRight } from 'lucide-react';
 
 // 동적 렌더링 강제 (useSearchParams 사용)
@@ -20,9 +20,32 @@ function LoginPageContent() {
   const [error, setError] = useState('');
 
   const callbackUrl = searchParams?.get('callbackUrl') || '/studio';
+  const errorParam = searchParams?.get('error');
+
+  // URL 파라미터에서 에러 확인
+  useEffect(() => {
+    if (errorParam) {
+      const errorMessages: Record<string, string> = {
+        'Configuration': '서버 설정 오류가 발생했습니다. 관리자에게 문의하세요.',
+        'AccessDenied': '로그인 접근이 거부되었습니다.',
+        'Verification': '인증 오류가 발생했습니다. 다시 시도해주세요.',
+        'OAuthSignin': 'OAuth 로그인 초기화 오류가 발생했습니다.',
+        'OAuthCallback': 'OAuth 콜백 처리 오류가 발생했습니다.',
+        'OAuthCreateAccount': '계정 생성 오류가 발생했습니다.',
+        'EmailCreateAccount': '이메일 계정 생성 오류가 발생했습니다.',
+        'Callback': '콜백 처리 오류가 발생했습니다.',
+        'OAuthAccountNotLinked': '이 이메일은 다른 계정과 연결되어 있습니다.',
+        'EmailSignin': '이메일 로그인 오류가 발생했습니다.',
+        'CredentialsSignin': '로그인 정보가 올바르지 않습니다.',
+        'SessionRequired': '로그인이 필요합니다.',
+      };
+      setError(errorMessages[errorParam] || `로그인 오류: ${errorParam}`);
+    }
+  }, [errorParam]);
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('🔵 이메일 로그인 시작:', { email });
     setIsLoading(true);
     setError('');
 
@@ -33,26 +56,42 @@ function LoginPageContent() {
         redirect: false,
       });
 
+      console.log('🔵 이메일 로그인 결과:', result);
+
       if (result?.error) {
-        setError('로그인에 실패했습니다.');
+        console.error('🔴 이메일 로그인 오류:', result.error);
+        setError(`로그인에 실패했습니다: ${result.error}`);
         setIsLoading(false);
-      } else {
+      } else if (result?.ok) {
+        console.log('✅ 이메일 로그인 성공');
         router.push(callbackUrl);
         router.refresh();
+      } else {
+        console.log('⚠️ 예상치 못한 결과:', result);
+        setIsLoading(false);
       }
     } catch (err) {
-      setError('로그인 중 오류가 발생했습니다.');
+      console.error('🔴 이메일 로그인 예외:', err);
+      setError(`로그인 중 오류가 발생했습니다: ${err instanceof Error ? err.message : 'Unknown error'}`);
       setIsLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
+    console.log('🔵 Google 로그인 버튼 클릭됨');
     setIsLoading(true);
     setError('');
     try {
-      await signIn('google', { callbackUrl });
+      console.log('🔵 signIn 함수 호출 중...', { callbackUrl });
+      // redirect: true로 변경하여 NextAuth가 자동으로 OAuth 플로우 처리
+      await signIn('google', { 
+        callbackUrl,
+        redirect: true, // OAuth 플로우를 위해 true로 변경
+      });
+      // redirect: true이면 여기까지 오지 않음 (자동으로 Google로 리다이렉트됨)
     } catch (err) {
-      setError('Google 로그인 중 오류가 발생했습니다.');
+      console.error('🔴 Google login error:', err);
+      setError('Google 로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
       setIsLoading(false);
     }
   };
@@ -61,9 +100,16 @@ function LoginPageContent() {
     setIsLoading(true);
     setError('');
     try {
-      await signIn('kakao', { callbackUrl });
+      console.log('🟡 카카오 로그인 시작...');
+      // redirect: true로 변경하여 자동 리다이렉트
+      await signIn('kakao', { 
+        callbackUrl,
+        redirect: true,
+      });
+      // redirect: true이면 여기까지 오지 않음
     } catch (err) {
-      setError('카카오 로그인 중 오류가 발생했습니다.');
+      console.error('Kakao login error:', err);
+      setError('카카오 로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
       setIsLoading(false);
     }
   };

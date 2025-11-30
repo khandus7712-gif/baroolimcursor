@@ -73,14 +73,6 @@ function createSystemSection(domain: DomainProfile): string {
 
 You are an expert marketing content writer specializing in the ${domain.id} industry.
 
-**CRITICAL LANGUAGE REQUIREMENT: 
-- Write ALL content ONLY in Korean (한국어)
-- Do NOT use English words, phrases, or sentences anywhere in the content
-- Do NOT include English translations in parentheses
-- Use Korean translations for all concepts
-- Examples: Use "맛집" instead of "restaurant", "맛있는" instead of "delicious", "추천" instead of "recommend"
-- If you need to describe technical terms, use Korean equivalents only**
-
 Brand Voice:
 - Description: ${domain.tone.brandVoiceDesc}
 - Formality: ${domain.tone.formality}
@@ -113,12 +105,10 @@ function createPlatformRulesSection(
 ): string {
   const mustInclude = platform.mustInclude || [];
   const bannedWords = platform.bannedWords || [];
-  const minChars = platform.id === 'blog' ? 1500 : undefined;
 
   return `[PLATFORM_RULES]
 
 Platform: ${platform.id}
-${minChars ? `Minimum Characters: ${minChars} (REQUIRED - content must be at least ${minChars} characters)` : ''}
 Maximum Characters: ${platform.maxChars}
 Line Break Style: ${platform.lineBreakStyle}
 Hashtag Count: ${platform.hashtagCount}
@@ -200,27 +190,18 @@ function createContentSection(
 
   // 이미지 캡션 (Vision 전처리 결과)
   if (content.imageCaptions && content.imageCaptions.length > 0) {
-    sections.push('Image Descriptions (use as reference only, do NOT include labels like "Caption:" or "**Caption:**" in the final content):');
+    sections.push('Image Descriptions:');
     content.imageCaptions.forEach((caption, index) => {
       sections.push(`${index + 1}. ${caption}`);
     });
-    if (platform.id === 'blog') {
-      sections.push(
-        '**중요:** 이미지 설명을 참고하여 본문에 자연스럽게 이미지 내용을 녹여내세요. 하지만 "Caption:", "**Caption:**", "이미지 설명:" 같은 라벨이나 표시를 본문에 포함하지 마세요. 이미지에 대한 설명은 본문의 자연스러운 문장 속에 포함시키세요.'
-      );
-    } else {
-      sections.push(
-        'Use these image descriptions to create visually-rich storytelling. Reference the images naturally in the content.'
-      );
-    }
+    sections.push(
+      'Use these image descriptions to create visually-rich storytelling. Reference the images naturally in the content.'
+    );
   }
 
   // 사용자 메모
   if (content.notes) {
-    sections.push(`User Notes (Primary Data - DO NOT override or dilute): ${content.notes}`);
-    sections.push(
-      `**메모 우선 규칙:**\n1. 메모 내용은 전체 글의 최우선 정보이며 Hook, 첫 단락, USP, 사례, 사진 설명에 우선 반영하세요.\n2. 메모의 핵심 문장/키워드/사건을 변형하거나 삭제하지 말고, 의미를 유지한 채 자연스럽게 활용하세요.\n3. 메모 정보는 글의 상단 20% 안에 반드시 등장해야 하며, 충돌되는 템플릿 규칙보다 우선 적용하세요.\n4. 메모에 없는 정보만 템플릿으로 보완하되, 메모 내용과 충돌하거나 덮어쓰지 마세요.\n5. 사진이나 근거 문장이 필요하면 메모 내용을 근거로 연결 문장을 작성하세요.`
-    );
+    sections.push(`User Notes: ${content.notes}`);
   }
 
   // 키워드
@@ -252,27 +233,14 @@ function createContentSection(
     );
   }
 
-  // 블로그 플랫폼일 때 최소 글자 수를 먼저 강조
   sections.push(
-    `\nGenerate content that:\n- **Write ONLY in Korean (한국어). Do NOT use any English words, phrases, or sentences. Do NOT include English translations in parentheses.**\n- Follows the platform rules and format\n- Uses the brand voice and tone\n- Includes relevant value propositions\n- Engages the target audience\n- Drives action through effective CTA`
+    `\nGenerate content that:\n- Follows the platform rules and format\n- Uses the brand voice and tone\n- Includes relevant value propositions\n- Engages the target audience\n- Drives action through effective CTA`
   );
 
+  // 블로그 플랫폼일 때 가독성 강조
   if (platform.id === 'blog') {
     sections.push(
-      `\n**블로그 콘텐츠 필수 규칙 (전 업종 공통 + 아롱하다 최적화):**\n1. **최소 1500자 이상** (공백 제외) 작성하며, 출력 순서를 반드시 지키세요: H1 제목 → Hook 단락 → Pain Point → USP 요약 → 본문(소제목 4~6개) → 결론+CTA → 해시태그 10~15개.\n2. **제목(H1)** 은 메뉴/서비스 + 상황 + 지역 키워드 조합으로 클릭 욕구를 자극하세요 (예: "창원 도계동 연말 모임은 아롱하다 전골이 정답").\n3. **Hook(첫 단락)** 은 위험·경쟁·고객 공감·계절 이슈 중 1~2개를 반드시 넣어 강력하게 시작하세요.\n4. **Pain Point** 는 두 번째 단락에서 명확히 제시하세요 (예: "단체로 가면 양·맛·위생 걱정 많으시죠?").\n5. **USP 3개 이상** 을 글 상단 30% 안에 다른 문장 형태로 반복 강조하세요. 아롱하다 전용 USP 레퍼런스: 매일 삶아 부드러운 전골 / 육수·냄비까지 위생 관리 / 신선한 재료 / 넉넉한 양 & 쾌적한 공간 / 전골+육전+명란감태주먹밥 조합.\n6. 본문은 정보 + 감각 묘사 + 구체적 디테일을 결합하고, H2/H3 소제목을 4~6개 사용하세요. 소제목 예시: "왜 이 메뉴가 특별한가", "맛의 핵심 포인트", "손님들이 좋아하는 이유", "직장인 점심 추천 이유", "위치 및 예약 안내".\n7. 문장은 13~18단어 이하, 문단은 3~4줄 이하로 끊고 긴 텍스트 블록을 금지하세요. 핵심 키워드는 **굵게**, 중요한 포인트는 bullet로 정리하세요.\n8. 감각 묘사(향, 온기, 식감)를 최소 2회 이상 넣고, 이미지 설명을 참고하되 'Caption:' 같은 라벨 없이 자연스럽게 녹여내세요.\n9. 모든 단락 사이에는 빈 줄을 넣고, 소제목 전후로 두 줄 여백을 두어 가독성을 높이세요.\n10. 마지막 CTA는 즉시성·희소성·편의성을 포함한 문장형으로 작성하고, 제공된 링크가 있다면 CTA 바로 아래에 배치하세요 (예: "연말 예약 빠르게 마감됩니다. 지금 네이버 예약 링크로 자리 잡으세요.").\n11. 해시태그는 의미 없는 일반 태그를 금지하고, 지역 + 메뉴 + 상황 조합으로 10~15개 작성하세요 (예: #아롱하다 #아롱사태전골 #창원도계동맛집 #연말모임 #점심회식).\n12. 중복 문장·과도한 감성·AI 티 나는 마무리를 금지하고, 전문가이지만 친절한 톤으로 중학생도 이해할 수 있게 작성하세요.`
-    );
-  }
-
-  // 인스타그램 플랫폼 규칙
-  if (platform.id === 'instagram') {
-    sections.push(
-      `\n**인스타그램 필수 규칙:**\n1. 첫 문장은 반드시 강력한 Hook으로 시작하세요 (고객 고민/상황/계절/희소성 기반, 예: \"연말 회식 메뉴 고민되세요?\").\n2. 두 번째 문장에는 고객 Pain Point를 넣으세요 (예: \"단체 예약 찾기 어렵다는 얘기 많죠?\").\n3. USP(장점)는 글 상단 30% 안에 3회 이상 강조하되, 문장 형태를 모두 다르게 변형하세요 (예: \"매일 삶아 깊은 국물\", \"위생 관리 철저\", \"신선한 재료\").\n4. 문장은 짧고 리듬감 있게 1~2줄로 구성하고 설명형 문단은 금지입니다.\n5. CTA는 즉시성·희소성을 반드시 포함하세요 (예: \"자리 빨리 찹니다. 미리 예약 주세요.\").\n6. 해시태그는 지역 + 메뉴 + 상황 중심으로 10~15개만 작성하고, 의미 없는 일반 태그(#foodie, #맛있는 등)는 사용하지 마세요.\n7. 이모지는 문장 1개당 1개 이하로만 사용하세요.`
-    );
-  }
-
-  if (platform.id === 'threads') {
-    sections.push(
-      `\n**Threads 댓글형 Reply Chain 규칙:**\n1. 본글은 2~3줄만 작성하고, 첫 문장은 문제·위험·경쟁·시즈널 이슈 중 하나를 활용해 강력한 Hook으로 시작하세요.\n2. 첫 번째 댓글에는 Pain Point 1개와 USP 1개만 짧게 담으세요 (예: \"단체로 가면 양·맛·위생 걱정 많죠?\" → \"아롱하다는 매일 삶고 육수·냄비까지 매일 살균합니다\").\n3. 두 번째 댓글(대댓글)은 즉시성·희소성을 강조한 CTA로 마무리하세요 (예: \"오늘도 점심 자리 빠르게 마감 중입니다. 지금 예약하세요!\").\n4. 각 줄은 하나의 메시지만 전달하고, 대화하듯 리듬감 있는 톤을 유지하세요.\n5. 해시태그는 업종 + 지역 + 메뉴 + 상황 중심으로 3~6개만 작성하고, 의미 없는 일반 태그(#foodie, #맛있는 등)는 사용하지 마세요.`
+      `\n**가독성 필수 요구사항:**\n- 모든 단락 사이에 빈 줄(\\n\\n) 삽입\n- 소제목(##) 전후로 빈 줄 2개씩 삽입\n- 각 단락은 2-4문장으로 간결하게\n- 긴 텍스트 블록 금지\n- 목록 사용 시 각 항목 간 공백 유지`
     );
   }
 
@@ -287,13 +255,12 @@ function createContentSection(
  */
 export function createImageAnalysisPrompt(domain: DomainProfile, notes?: string): string {
   const parts: string[] = [
-    '**중요: 모든 설명은 한국어로만 작성하세요. 영어를 사용하지 마세요.**',
-    '제공된 이미지를 분석하고 다음을 설명하는 상세한 alt-text 형식의 캡션을 한국어로 작성하세요:',
-    '1. 보이는 주요 대상과 객체',
-    '2. 색상, 조명, 전체적인 분위기',
-    '3. 구도와 시각적 스타일',
-    '4. 보이는 텍스트나 표지판',
-    '5. 전체적인 인상과 감정',
+    'Analyze the provided image and create a detailed alt-text-like caption that describes:',
+    '1. Main subjects and objects visible',
+    '2. Colors, lighting, and overall mood',
+    '3. Composition and visual style',
+    '4. Any text or signs visible',
+    '5. Overall impression and emotions evoked',
   ];
 
   // 도메인별 강조점

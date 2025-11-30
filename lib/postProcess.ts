@@ -60,22 +60,13 @@ export async function runPostProcess(text: string, options: PostProcessOptions):
     intent: options.intent,
   });
 
-  // 4. 최소 글자 수 확인 (블로그 플랫폼)
-  if (options.platform.id === 'blog') {
-    const minChars = 1500;
-    const textLength = processedText.replace(/\s/g, '').length; // 공백 제외한 글자 수
-    if (textLength < minChars) {
-      warnings.push(`경고: 블로그 콘텐츠가 최소 요구 글자 수(${minChars}자)보다 짧습니다. 현재: ${textLength}자`);
-    }
-  }
-
-  // 5. 길이 제한 확인 및 조정
+  // 4. 길이 제한 확인 및 조정
   if (processedText.length > options.platform.maxChars) {
     processedText = truncateText(processedText, options.platform.maxChars);
     warnings.push(`Content truncated to ${options.platform.maxChars} characters`);
   }
 
-  // 6. 플랫폼별 포맷팅 적용
+  // 5. 플랫폼별 포맷팅 적용
   processedText = applyPlatformFormatting(processedText, options.platform);
 
   return {
@@ -343,59 +334,33 @@ function truncateText(text: string, maxLength: number): string {
 function applyPlatformFormatting(text: string, platform: PlatformTemplate): string {
   let formatted = text;
 
+  // 라인 브레이크 스타일에 따라 처리
+  if (platform.lineBreakStyle === 'short') {
+    // 짧은 라인 브레이크 (2개 이상 연속 제거)
+    formatted = formatted.replace(/\n{3,}/g, '\n\n');
+  } else {
+    // 일반 라인 브레이크 (단일 개행을 더블로)
+    formatted = formatted.replace(/\n(?!\n)/g, '\n\n');
+  }
+
   // 플랫폼별 특수 처리
   switch (platform.id) {
     case 'instagram':
       // 인스타그램: 과도한 공백 정리
       formatted = formatted.replace(/[ \t]+/g, ' ');
-      // 단일 개행을 더블로
-      formatted = formatted.replace(/\n(?!\n)/g, '\n\n');
-      // 3개 이상 연속 개행 제거
-      formatted = formatted.replace(/\n{3,}/g, '\n\n');
       break;
     case 'threads':
       // Threads: 간결한 포맷
       formatted = formatted.replace(/\n{2,}/g, '\n');
       break;
     case 'blog':
-      // 블로그: 가독성 최우선 - 단락 구분 명확히
-      // 0. 불필요한 라벨 제거 (Caption:, **Caption:** 등)
-      formatted = formatted.replace(/\*\*Caption:\*\*/gi, '');
-      formatted = formatted.replace(/Caption:/gi, '');
-      formatted = formatted.replace(/\*\*이미지 설명:\*\*/gi, '');
-      formatted = formatted.replace(/이미지 설명:/gi, '');
-      
-      // 0-1. 일반적인 섹션 제목 제거 또는 자연스럽게 변경
-      formatted = formatted.replace(/^##\s*도입부\s*$/gim, '');
-      formatted = formatted.replace(/^##\s*본문\s*$/gim, '');
-      formatted = formatted.replace(/^##\s*결론\s*$/gim, '');
-      
-      // 1. 먼저 모든 단일 개행을 더블로 변환
-      formatted = formatted.replace(/([^\n])\n([^\n])/g, '$1\n\n$2');
-      // 2. 3개 이상 연속 개행을 2개로 정리
-      formatted = formatted.replace(/\n{3,}/g, '\n\n');
-      // 3. 소제목(##) 전후에 빈 줄 추가
-      formatted = formatted.replace(/([^\n])(##)/g, '$1\n\n$2');
-      formatted = formatted.replace(/(##[^\n]+)\n([^\n])/g, '$1\n\n$2');
-      // 4. 제목(#) 전후에도 빈 줄 추가 (H1 제외하고 H2 이상만)
-      formatted = formatted.replace(/([^\n])(#{2,})/g, '$1\n\n$2');
-      // 5. 목록 항목 사이에 간격 추가
-      formatted = formatted.replace(/(\n[-*]\s[^\n]+)\n([-*]\s)/g, '$1\n\n$2');
+      // 블로그: 단락 구분 명확히
+      formatted = formatted.replace(/\n\n\n+/g, '\n\n');
       break;
     case 'gmb':
       // GMB: 전문적인 포맷
-      formatted = formatted.replace(/\n(?!\n)/g, '\n\n');
       formatted = formatted.replace(/\n{3,}/g, '\n\n');
       break;
-    default:
-      // 기본: 라인 브레이크 스타일에 따라 처리
-      if (platform.lineBreakStyle === 'short') {
-        // 짧은 라인 브레이크 (2개 이상 연속 제거)
-        formatted = formatted.replace(/\n{3,}/g, '\n\n');
-      } else {
-        // 일반 라인 브레이크 (단일 개행을 더블로)
-        formatted = formatted.replace(/\n(?!\n)/g, '\n\n');
-      }
   }
 
   return formatted.trim();

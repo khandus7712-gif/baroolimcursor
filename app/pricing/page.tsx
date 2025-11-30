@@ -5,7 +5,7 @@
  */
 
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Check, X, Sparkles, Zap, Crown, Rocket, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Check, X, Sparkles, Zap, Crown, Rocket } from 'lucide-react';
 
 export default function PricingPage() {
   const router = useRouter();
@@ -30,28 +30,6 @@ export default function PricingPage() {
       gradient: 'from-gray-600 to-gray-800',
       badge: null,
       buttonText: '무료로 시작하기',
-    },
-    {
-      id: 'single',
-      name: '단건 구매',
-      icon: ShoppingCart,
-      price: '990원',
-      period: '1회',
-      description: '필요할 때만 구매하세요',
-      features: [
-        { text: '콘텐츠 1건 생성', included: true },
-        { text: '모든 업종 이용 가능', included: true },
-        { text: '4개 플랫폼 지원', included: true },
-        { text: 'AI 콘텐츠 생성', included: true },
-        { text: '해시태그 자동 생성', included: true },
-        { text: '이미지 분석', included: true },
-        { text: '예약 발행', included: false },
-        { text: '플러그인', included: false },
-      ],
-      gradient: 'from-green-600 to-emerald-600',
-      badge: 'NEW',
-      badgeColor: 'bg-green-500',
-      buttonText: '990원 구매하기',
     },
     {
       id: 'basic',
@@ -161,7 +139,7 @@ export default function PricingPage() {
           <p className="text-xl text-white/70 mb-8">
             복잡한 계산 없이, 딱 필요한 만큼만 사용하세요
           </p>
-          <div className="flex flex-wrap justify-center gap-4 text-sm mb-6">
+          <div className="flex flex-wrap justify-center gap-4 text-sm">
             <div className="bg-white/5 px-6 py-3 rounded-full border border-white/20">
               ✅ 언제든 해지 가능
             </div>
@@ -172,16 +150,10 @@ export default function PricingPage() {
               ✅ 환불 보장 (7일 이내)
             </div>
           </div>
-          <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-xl p-4 max-w-2xl mx-auto">
-            <p className="text-sm text-white/90 text-center">
-              <strong>서비스 제공기간 안내:</strong> 결제 시점부터 구독 기간 동안 서비스가 제공됩니다. 
-              월간 구독의 경우 결제일로부터 30일간, 단건 구매의 경우 구매 즉시 1회 생성 서비스가 제공됩니다.
-            </p>
-          </div>
         </div>
 
         {/* 요금제 카드 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
           {plans.map((plan) => {
             const Icon = plan.icon;
             return (
@@ -205,25 +177,12 @@ export default function PricingPage() {
                   <Icon className="w-12 h-12 mb-4" />
                   <h3 className="text-2xl font-black mb-2">{plan.name}</h3>
                   <p className="text-white/80 text-sm mb-4">{plan.description}</p>
-                  <div className="flex items-baseline gap-2 mb-3">
+                  <div className="flex items-baseline gap-2">
                     <span className="text-4xl font-black">{plan.price}</span>
                     {plan.period && (
                       <span className="text-white/70">/ {plan.period}</span>
                     )}
                   </div>
-                  {plan.id === 'single' ? (
-                    <p className="text-xs text-white/70 bg-black/20 rounded-lg p-2">
-                      서비스 제공기간: 구매 즉시 1회 생성
-                    </p>
-                  ) : plan.id === 'free' ? (
-                    <p className="text-xs text-white/70 bg-black/20 rounded-lg p-2">
-                      서비스 제공기간: 평생 이용 가능
-                    </p>
-                  ) : (
-                    <p className="text-xs text-white/70 bg-black/20 rounded-lg p-2">
-                      서비스 제공기간: 결제일로부터 30일간
-                    </p>
-                  )}
                 </div>
 
                 {/* 기능 목록 */}
@@ -248,8 +207,6 @@ export default function PricingPage() {
                     onClick={() => {
                       if (plan.id === 'free') {
                         router.push('/studio');
-                      } else if (plan.id === 'single') {
-                        router.push('/payment?plan=SINGLE_CONTENT');
                       } else if (plan.id === 'enterprise') {
                         window.location.href = 'mailto:pernar.go@gmail.com?subject=엔터프라이즈 플랜 문의';
                       } else {

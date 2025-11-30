@@ -93,9 +93,7 @@ function StudioPageContent() {
     });
 
   const handleImageFiles = async (files: FileList | File[]) => {
-    console.log('[Image] handleImageFiles called with', files.length, 'files');
     const incoming = Array.from(files).filter((file) => file.type.startsWith('image/'));
-    console.log('[Image] Filtered to', incoming.length, 'image files');
     if (incoming.length === 0) {
       setToast({ message: '이미지 파일만 업로드할 수 있습니다.', type: 'error' });
       return;
@@ -155,13 +153,9 @@ function StudioPageContent() {
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('[Image] File input changed:', e.target.files?.length || 0, 'files');
     const files = e.target.files;
     if (files && files.length > 0) {
-      console.log('[Image] Processing', files.length, 'files');
       void handleImageFiles(files);
-    } else {
-      console.warn('[Image] No files selected');
     }
     e.target.value = '';
   };
@@ -577,12 +571,8 @@ function StudioPageContent() {
                     return (
                       <button
                         key={platform.id}
-                        type="button"
-                        onClick={() => {
-                          console.log('[Platform] Clicked:', platform.id);
-                          setPlatformId(platform.id);
-                        }}
-                        className={`flex flex-col items-center justify-center gap-2 p-4 rounded-lg border transition-all min-h-[100px] cursor-pointer ${
+                        onClick={() => setPlatformId(platform.id)}
+                        className={`flex flex-col items-center justify-center gap-2 p-4 rounded-lg border transition-all min-h-[100px] ${
                           platformId === platform.id
                             ? 'border-brand-primary bg-brand-primary/5 shadow-sm'
                             : 'border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm'

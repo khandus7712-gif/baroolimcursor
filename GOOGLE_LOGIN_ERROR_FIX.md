@@ -110,3 +110,6 @@ NEXTAUTH_DEBUG=true
 - Prisma 스키마 확인
 - `npm run db:push` 실행
 
+
+
+

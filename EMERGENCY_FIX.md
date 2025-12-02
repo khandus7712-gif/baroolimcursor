@@ -42,3 +42,6 @@ NEXTAUTH_URL=http://localhost:3000
 
 **3000 포트가 훨씬 안정적입니다!**
 
+
+
+

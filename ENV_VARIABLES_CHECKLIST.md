@@ -206,3 +206,6 @@ npm run dev
 - Google OAuth 문제 해결: `GOOGLE_OAUTH_FIX.md`
 - Kakao 로그인 문제 해결: `KAKAO_LOGIN_TROUBLESHOOTING.md`
 
+
+
+

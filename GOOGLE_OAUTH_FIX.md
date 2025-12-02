@@ -124,3 +124,6 @@ npm run dev
 **가장 중요한 것**: OAuth 동의 화면이 완료되지 않으면 클라이언트 ID가 있어도 `invalid_client` 오류가 발생합니다!
 
 
+
+
+

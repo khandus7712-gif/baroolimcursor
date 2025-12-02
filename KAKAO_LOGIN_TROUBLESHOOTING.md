@@ -82,3 +82,6 @@ F12 → Network 탭에서 `/api/auth/callback/kakao` 요청 확인
 - 화면에 표시되는 오류 메시지
 
 
+
+
+

@@ -67,3 +67,6 @@
 2. 서버 재시작 (Ctrl+C 후 npm run dev)
 3. Google 로그인 다시 시도
 
+
+
+

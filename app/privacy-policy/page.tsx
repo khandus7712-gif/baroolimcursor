@@ -189,7 +189,7 @@ export default function PrivacyPolicyPage() {
               <p><strong>개인정보 보호책임자:</strong> 이주연</p>
               <p><strong>이메일:</strong> privacy@baroolim.com</p>
               <p><strong>전화:</strong> 010-5850-1255</p>
-              <p><strong>주소:</strong> 경남 창원시 의창구 도계동 352-12 203호</p>
+              <p><strong>주소:</strong> 경남 창원시 의창구 북면 동곡로 33, 101-1304</p>
             </div>
           </section>
 

@@ -281,7 +281,7 @@ export default function RefundPolicyPage() {
                 <strong>전화:</strong> <a href="tel:010-5850-1255" className="text-brand-neon-purple hover:underline">010-5850-1255</a>
               </p>
               <p className="text-white/90">
-                <strong>주소:</strong> 경남 창원시 의창구 도계동 352-12 203호
+                <strong>주소:</strong> 경남 창원시 의창구 북면 동곡로 33, 101-1304
               </p>
               <p className="text-white/90">
                 <strong>운영시간:</strong> 평일 09:00-18:00 (주말 및 공휴일 제외)

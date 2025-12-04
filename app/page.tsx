@@ -584,7 +584,7 @@ export default function HomePage() {
             <p className="text-sm">Made with ❤️ by Baroolim Team</p>
             <p className="text-xs mt-4 text-white/40">
               대표: 이주연 | 사업자등록번호: 308-32-01281<br />
-              경남 창원시 의창구 도계동 352-12 203호<br />
+              경남 창원시 의창구 북면 동곡로 33, 101-1304<br />
               전화: 010-5850-1255 | 이메일: pernar.go@gmail.com
             </p>
           </div>

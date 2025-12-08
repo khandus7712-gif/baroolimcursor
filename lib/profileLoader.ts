@@ -16,7 +16,7 @@ import gmbTemplate from '@/profiles/platforms/gmb.json';
 /**
  * 구독 플랜 타입
  */
-export type SubscriptionPlan = 'FREE' | 'BASIC' | 'PRO';
+export type SubscriptionPlan = 'FREE' | 'BASIC' | 'PRO' | 'ENTERPRISE';
 
 /**
  * 플랜별 접근 가능한 도메인 정의
@@ -29,6 +29,14 @@ export const PLAN_DOMAINS: Record<SubscriptionPlan, string[]> = {
     'education', 'realestate', 'auto', 'travel'
   ],
   PRO: [
+    'food', 'beauty', 'retail',
+    'cafe', 'fitness', 'pet',
+    'education', 'realestate', 'auto', 'travel',
+    'medical', 'legal', 'interior',
+    'flower', 'laundry', 'photo', 'print',
+    'repair', 'rental', 'hotel', 'spa'
+  ],
+  ENTERPRISE: [
     'food', 'beauty', 'retail',
     'cafe', 'fitness', 'pet',
     'education', 'realestate', 'auto', 'travel',

@@ -45,6 +45,7 @@ model User {
   brands         Brand[]
   generations    Generation[]
   scheduledPosts ScheduledPost[]
+  userPasses     UserPass[]
 }
 
 // NextAuth.js 테이블
@@ -155,6 +156,22 @@ model Generation {
   @@index([userId])
   @@index([domainId])
   @@index([createdAt])
+}
+
+// 일회성/패스
+model UserPass {
+  id             String   @id @default(cuid())
+  userId         String
+  type           String   // single, pack_10, pack_50, pack_100
+  remainingUses  Int
+  purchaseDate   DateTime @default(now())
+  expiryDate     DateTime?
+  status         String   @default("active")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
 }
 
 // 예약 발행 상태

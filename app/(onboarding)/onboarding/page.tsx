@@ -5,14 +5,28 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
-const DOMAINS = [
+// 전체 업종 목록 (7개)
+const ALL_DOMAINS = [
   { id: 'food', name: '음식/식당' },
   { id: 'beauty', name: '뷰티/미용' },
   { id: 'retail', name: '소매/유통' },
+  { id: 'cafe', name: '카페/베이커리' },
+  { id: 'fitness', name: '운동/헬스' },
+  { id: 'pet', name: '반려동물' },
+  { id: 'education', name: '교육/학원' },
 ];
+
+// 플랜별 접근 가능한 업종
+const PLAN_DOMAINS: Record<string, string[]> = {
+  FREE: ['food', 'beauty', 'retail'],
+  BASIC: ['food', 'beauty', 'retail', 'cafe', 'fitness', 'pet', 'education'],
+  PRO: ['food', 'beauty', 'retail', 'cafe', 'fitness', 'pet', 'education'],
+  ENTERPRISE: ['food', 'beauty', 'retail', 'cafe', 'fitness', 'pet', 'education'],
+};
 
 const KPIS = [
   '예약 전환율',
@@ -27,6 +41,7 @@ const KPIS = [
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [domainId, setDomainId] = useState('');
   const [selectedKpis, setSelectedKpis] = useState<string[]>([]);
   const [tone, setTone] = useState('');
@@ -35,6 +50,27 @@ export default function OnboardingPage() {
   const [brandName, setBrandName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [userPlan, setUserPlan] = useState<string>('FREE');
+
+  // 사용자 플랜 정보 가져오기
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user) {
+      fetch('/api/user/plan')
+        .then(res => res.json())
+        .then(data => {
+          if (data.plan) {
+            setUserPlan(data.plan);
+          }
+        })
+        .catch(err => console.error('Failed to fetch user plan:', err));
+    }
+  }, [status, session]);
+
+  // 플랜별 접근 가능한 업종 필터링
+  const availableDomains = useMemo(() => {
+    const allowedDomainIds = PLAN_DOMAINS[userPlan] || PLAN_DOMAINS.FREE;
+    return ALL_DOMAINS.filter(d => allowedDomainIds.includes(d.id));
+  }, [userPlan]);
 
   const handleKpiToggle = (kpi: string) => {
     setSelectedKpis((prev) => (prev.includes(kpi) ? prev.filter((k) => k !== kpi) : [...prev, kpi]));
@@ -108,12 +144,17 @@ export default function OnboardingPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">업종을 선택하세요</option>
-              {DOMAINS.map((domain) => (
+              {availableDomains.map((domain) => (
                 <option key={domain.id} value={domain.id}>
                   {domain.name}
                 </option>
               ))}
             </select>
+            {availableDomains.length < ALL_DOMAINS.length && (
+              <p className="text-xs text-gray-500 mt-2">
+                현재 플랜에서는 {availableDomains.length}개 업종만 사용 가능합니다. 플랜을 업그레이드하면 더 많은 업종을 이용할 수 있습니다.
+              </p>
+            )}
           </div>
 
           {/* 목표(KPI) 체크 */}

@@ -8,7 +8,11 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
-const PLANS: Record<string, { name: string; price: number; plan: string }> = {
+const PLANS: Record<
+  string,
+  { name: string; price: number; plan?: string; pass?: { uses: number; expiryDays?: number } }
+> = {
+  SINGLE_CONTENT: { name: '단건 콘텐츠', price: 990, pass: { uses: 1, expiryDays: 90 } },
   BASIC: { name: '베이직', price: 29900, plan: 'BASIC' },
   PRO: { name: '프로', price: 49900, plan: 'PRO' },
   ENTERPRISE: { name: '엔터프라이즈', price: 79900, plan: 'ENTERPRISE' },
@@ -69,7 +73,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 현재는 간단하게 금액으로 플랜 판별
     let planId = 'BASIC';
     let planInfo = PLANS.BASIC;
-    
+
     for (const [key, info] of Object.entries(PLANS)) {
       if (info.price === amount) {
         planId = key;
@@ -78,23 +82,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // 구독 만료일 계산 (1개월 후)
-    const planExpiry = new Date();
-    planExpiry.setMonth(planExpiry.getMonth() + 1);
+    // 단건 패스 결제 처리
+    if (planId === 'SINGLE_CONTENT' && planInfo.pass) {
+      const expiryDate = planInfo.pass.expiryDays
+        ? new Date(Date.now() + planInfo.pass.expiryDays * 24 * 60 * 60 * 1000)
+        : null;
 
-    // 사용자 플랜 업데이트
-    await prisma.user.update({
-      where: {
-        id: session.user.id,
-      },
-      data: {
-        plan: planInfo.plan as any,
-        planExpiry,
-        // 일일 카운트 초기화
-        dailyGenerationCount: 0,
-        lastGenerationDate: new Date(),
-      },
-    });
+      await prisma.userPass.create({
+        data: {
+          userId: session.user.id,
+          type: 'single',
+          remainingUses: planInfo.pass.uses,
+          purchaseDate: new Date(),
+          expiryDate: expiryDate ?? undefined,
+          status: 'active',
+        },
+      });
+    } else if (planInfo.plan) {
+      // 구독 플랜 결제 처리
+      const planExpiry = new Date();
+      planExpiry.setMonth(planExpiry.getMonth() + 1);
+
+      await prisma.user.update({
+        where: {
+          id: session.user.id,
+        },
+        data: {
+          plan: planInfo.plan as any,
+          planExpiry,
+          // 일일 카운트 초기화
+          dailyGenerationCount: 0,
+          lastGenerationDate: new Date(),
+        },
+      });
+    } else {
+      return res.status(400).json({ error: '유효하지 않은 결제 항목입니다.' });
+    }
 
     // TODO: 결제 내역을 DB에 저장
     // await prisma.payment.create({

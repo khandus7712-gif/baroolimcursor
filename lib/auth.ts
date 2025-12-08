@@ -1,12 +1,12 @@
 /**
- * NextAuth 설정 (디버그 버전)
+ * NextAuth 설정 (테스트 계정 포함)
  *
  * 목적:
- *  - 로그인 401 문제의 "진짜 원인"을 먼저 찾기 위해
- *  - DB/Prisma를 일단 완전히 우회해서 테스트하는 버전
+ *  - 토스페이먼츠 결제 테스트를 위한 테스트 계정 제공
+ *  - DB/Prisma를 우회한 간단한 인증 시스템
  *
  * 이 버전에서는:
- *  - 이메일만 넣으면 항상 로그인 성공 (debug-user)
+ *  - 테스트 계정으로 로그인 가능
  *  - Prisma 쿼리는 전혀 실행하지 않음
  *  - 세션은 JWT 안에만 저장 (DB 세션 X)
  */
@@ -18,6 +18,25 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import KakaoProvider from 'next-auth/providers/kakao';
 import { prisma } from './prisma';
+
+/**
+ * 테스트 계정 목록
+ * 토스페이먼츠 결제 테스트용
+ */
+const TEST_ACCOUNTS = [
+  {
+    email: 'test@baroolim.com',
+    password: 'test1234',
+    name: '테스트 사용자',
+    id: 'test-user-1',
+  },
+  {
+    email: 'payment@baroolim.com',
+    password: 'payment1234',
+    name: '결제 테스트',
+    id: 'test-user-payment',
+  },
+] as const;
 
 // --- 환경변수 체크 로그 (서버 로그용, 문제되면 지워도 됨) ---
 console.log('🔍 [auth.ts] ENV CHECK', {
@@ -44,39 +63,48 @@ export const authOptions: NextAuthOptions = {
 
   providers: [
     /**
-     * 1) 디버그용 Credentials Provider
+     * 1) 테스트 계정 Credentials Provider
      *
-     * - 이메일만 입력하면 항상 "debug-user"로 로그인 성공
+     * - 테스트 계정으로 로그인 가능
      * - DB 조회/생성 전혀 안 함
-     * - 이게 잘 되면: NextAuth/쿠키/도메인은 정상이라는 뜻
-     * - 그 다음 단계에서만 Prisma를 다시 붙이면 됨
+     * - 토스페이먼츠 결제 테스트용
      */
     CredentialsProvider({
-      name: 'Email only (DEBUG)',
+      name: 'Test Account',
       credentials: {
         email: { label: '이메일', type: 'email' },
-        password: { label: '비밀번호', type: 'password' }, // UI용, 실제로는 안 씀
+        password: { label: '비밀번호', type: 'password' },
       },
       async authorize(credentials) {
-        console.log('🔵 [DEBUG] Credentials 로그인 시도:', {
+        console.log('🔵 [AUTH] 로그인 시도:', {
           email: credentials?.email,
         });
 
-        if (!credentials?.email) {
-          console.warn('⚠️ [DEBUG] 이메일이 없습니다.');
+        if (!credentials?.email || !credentials?.password) {
+          console.warn('⚠️ [AUTH] 이메일 또는 비밀번호가 없습니다.');
           return null;
         }
 
-        // ✅ 여기서는 DB 전혀 사용하지 않고 더미 유저를 반환
         const email = credentials.email.trim().toLowerCase();
+        const password = credentials.password;
+
+        // 테스트 계정 확인
+        const testAccount = TEST_ACCOUNTS.find(
+          (account) => account.email === email && account.password === password
+        );
+
+        if (!testAccount) {
+          console.warn('⚠️ [AUTH] 테스트 계정이 아닙니다:', email);
+          return null;
+        }
 
         const user = {
-          id: 'debug-user-id',       // 고정된 더미 ID
-          email,
-          name: email.split('@')[0],
+          id: testAccount.id,
+          email: testAccount.email,
+          name: testAccount.name,
         };
 
-        console.log('✅ [DEBUG] Credentials authorize 성공:', user);
+        console.log('✅ [AUTH] 로그인 성공:', user);
         return user;
       },
     }),
@@ -106,7 +134,7 @@ export const authOptions: NextAuthOptions = {
   ],
 
   /**
-   * 콜백들: 디버그 단계에서는 DB를 전혀 호출하지 않고
+   * 콜백들: DB를 전혀 호출하지 않고
    * 토큰/세션에 최소 정보만 넣어서 돌린다.
    */
   callbacks: {

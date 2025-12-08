@@ -18,11 +18,24 @@ import {
 } from 'lucide-react';
 import ScheduleModal from '../components/ScheduleModal';
 
-const DOMAINS = [
+// 전체 업종 목록 (7개)
+const ALL_DOMAINS = [
   { id: 'food', name: '음식/식당', emoji: '🍜' },
   { id: 'beauty', name: '뷰티/미용', emoji: '💇' },
   { id: 'retail', name: '소매/유통', emoji: '🛍️' },
+  { id: 'cafe', name: '카페/베이커리', emoji: '☕' },
+  { id: 'fitness', name: '운동/헬스', emoji: '💪' },
+  { id: 'pet', name: '반려동물', emoji: '🐾' },
+  { id: 'education', name: '교육/학원', emoji: '📚' },
 ];
+
+// 플랜별 접근 가능한 업종
+const PLAN_DOMAINS: Record<string, string[]> = {
+  FREE: ['food', 'beauty', 'retail'],
+  BASIC: ['food', 'beauty', 'retail', 'cafe', 'fitness', 'pet', 'education'],
+  PRO: ['food', 'beauty', 'retail', 'cafe', 'fitness', 'pet', 'education'],
+  ENTERPRISE: ['food', 'beauty', 'retail', 'cafe', 'fitness', 'pet', 'education'],
+};
 
 const PLATFORMS = [
   { id: 'instagram', name: 'Instagram', icon: Instagram, color: 'text-pink-500' },
@@ -79,10 +92,31 @@ function StudioPageContent() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [previewMode, setPreviewMode] = useState<'plain' | 'blog'>('plain');
+  const [userPlan, setUserPlan] = useState<string>('FREE');
   const trimmedBrandName = brandName.trim();
   const trimmedRegion = region.trim();
   const isSearchInfoReady = Boolean(trimmedBrandName) && Boolean(trimmedRegion);
   const isGenerateDisabled = isGenerating || !notes || (enableSearch && !isSearchInfoReady);
+
+  // 사용자 플랜 정보 가져오기
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user) {
+      fetch('/api/user/plan')
+        .then(res => res.json())
+        .then(data => {
+          if (data.plan) {
+            setUserPlan(data.plan);
+          }
+        })
+        .catch(err => console.error('Failed to fetch user plan:', err));
+    }
+  }, [status, session]);
+
+  // 플랜별 접근 가능한 업종 필터링
+  const availableDomains = useMemo(() => {
+    const allowedDomainIds = PLAN_DOMAINS[userPlan] || PLAN_DOMAINS.FREE;
+    return ALL_DOMAINS.filter(d => allowedDomainIds.includes(d.id));
+  }, [userPlan]);
 
   const convertFileToDataUrl = (file: File) =>
     new Promise<string>((resolve, reject) => {
@@ -410,8 +444,15 @@ function StudioPageContent() {
     }
   };
 
-  const selectedDomain = DOMAINS.find(d => d.id === domainId);
+  const selectedDomain = ALL_DOMAINS.find(d => d.id === domainId);
   const selectedPlatform = PLATFORMS.find(p => p.id === platformId);
+
+  // 선택된 업종이 현재 플랜에서 접근 불가능하면 첫 번째 접근 가능한 업종으로 변경
+  useEffect(() => {
+    if (availableDomains.length > 0 && !availableDomains.find(d => d.id === domainId)) {
+      setDomainId(availableDomains[0].id);
+    }
+  }, [availableDomains, domainId]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -523,6 +564,37 @@ function StudioPageContent() {
                       </div>
                     ))}
                   </div>
+                )}
+              </div>
+
+              {/* 업종 선택 */}
+              <div className="mb-6">
+                <div className="mb-4">
+                  <label className="block text-lg font-semibold text-gray-900 mb-1">
+                    업종 선택 *
+                  </label>
+                  <p className="text-sm text-gray-600">콘텐츠를 생성할 업종을 선택하세요</p>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {availableDomains.map((domain) => (
+                    <button
+                      key={domain.id}
+                      onClick={() => setDomainId(domain.id)}
+                      className={`flex flex-col items-center justify-center gap-2 p-4 rounded-lg border transition-all min-h-[100px] ${
+                        domainId === domain.id
+                          ? 'border-brand-primary bg-brand-primary/5 shadow-sm'
+                          : 'border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm'
+                      }`}
+                    >
+                      <span className="text-2xl">{domain.emoji}</span>
+                      <span className="font-medium text-sm text-gray-900">{domain.name}</span>
+                    </button>
+                  ))}
+                </div>
+                {availableDomains.length < ALL_DOMAINS.length && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    현재 플랜에서는 {availableDomains.length}개 업종만 사용 가능합니다. 플랜을 업그레이드하면 더 많은 업종을 이용할 수 있습니다.
+                  </p>
                 )}
               </div>
 

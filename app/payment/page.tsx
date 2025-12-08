@@ -28,7 +28,13 @@ const PLANS: Plan[] = [
     price: 990,
     billingType: 'single',
     dailyLimit: null,
-    features: ['원하는 콘텐츠 한 건만 즉시 구매', '결제 후 바로 콘텐츠 생성 가능', '필요할 때마다 유연하게 이용'],
+    features: [
+      '콘텐츠 1개 생성 (블로그 포함 1차감)',
+      '업종 7개 / 플랫폼 4개 모두 사용',
+      '플러그인 포함',
+      '결제 후 즉시 생성 가능',
+      '구매 후 90일 내 사용',
+    ],
   },
   {
     id: 'BASIC',
@@ -36,7 +42,13 @@ const PLANS: Plan[] = [
     price: 29900,
     billingType: 'monthly',
     dailyLimit: 3,
-    features: ['하루 3개 생성', '모든 플랫폼 지원', '고급 AI 기능', '이메일 지원', '예약 발행'],
+    features: [
+      '하루 3개 생성',
+      '업종 7개 / 플랫폼 4개',
+      'AI 콘텐츠 생성 + 모든 플러그인',
+      '예약 저장 + 이메일 알림',
+      '이메일 지원',
+    ],
   },
   {
     id: 'PRO',
@@ -44,7 +56,13 @@ const PLANS: Plan[] = [
     price: 49900,
     billingType: 'monthly',
     dailyLimit: 10,
-    features: ['하루 10개 생성', '모든 플랫폼 지원', '프리미엄 AI', '우선 지원', '예약 발행', '분석 리포트'],
+    features: [
+      '하루 10개 생성',
+      '업종 7개 / 플랫폼 4개',
+      'AI 콘텐츠 생성 + 모든 플러그인',
+      '예약 저장 + 이메일 알림',
+      '우선 이메일 지원',
+    ],
     popular: true,
   },
   {
@@ -53,7 +71,13 @@ const PLANS: Plan[] = [
     price: 79900,
     billingType: 'monthly',
     dailyLimit: 30,
-    features: ['하루 30개 생성', '무제한 플랫폼', '커스텀 AI', '전담 매니저', '예약 발행', '고급 분석', 'API 제공'],
+    features: [
+      '하루 30개 생성',
+      '업종 7개 / 플랫폼 4개',
+      'AI 콘텐츠 생성 + 모든 플러그인',
+      '예약 저장 + 이메일 알림',
+      '우선 이메일 지원',
+    ],
   },
 ];
 

@@ -12,6 +12,25 @@ export default function PricingPage() {
 
   const plans = [
     {
+      id: 'single',
+      name: '단건 구매',
+      icon: Sparkles,
+      price: '990원',
+      period: '1회',
+      description: '필요할 때만 가볍게',
+      features: [
+        { text: '콘텐츠 1개 생성', included: true },
+        { text: '업종 7개 모두 사용', included: true },
+        { text: '4개 플랫폼 지원', included: true },
+        { text: '플러그인 포함', included: true },
+        { text: '90일 내 사용', included: true },
+      ],
+      gradient: 'from-amber-500 to-orange-500',
+      badge: '간편',
+      badgeColor: 'bg-amber-500',
+      buttonText: '990원으로 시작',
+    },
+    {
       id: 'free',
       name: 'Free',
       icon: Sparkles,
@@ -23,9 +42,8 @@ export default function PricingPage() {
         { text: '기본 업종 3개 (음식/뷰티/소매)', included: true },
         { text: '4개 플랫폼 지원', included: true },
         { text: 'AI 콘텐츠 생성', included: true },
-        { text: '예약 발행', included: false },
-        { text: '고급 플러그인', included: false },
-        { text: '우선 지원', included: false },
+        { text: '플러그인 포함', included: true },
+        { text: '예약 알림(이메일)', included: false },
       ],
       gradient: 'from-gray-600 to-gray-800',
       badge: null,
@@ -40,14 +58,12 @@ export default function PricingPage() {
       description: '매일 마케팅하는 사장님',
       features: [
         { text: '하루 3개 생성', included: true },
-        { text: '업종 10개 선택 가능', included: true },
+        { text: '업종 7개 모두 사용', included: true },
         { text: '4개 플랫폼 지원', included: true },
         { text: 'AI 콘텐츠 생성', included: true },
-        { text: '예약 발행 무제한', included: true },
-        { text: '기본 플러그인', included: true },
+        { text: '모든 플러그인', included: true },
+        { text: '예약 저장 + 이메일 알림', included: true },
         { text: '이메일 지원', included: true },
-        { text: '고급 플러그인', included: false },
-        { text: '우선 지원', included: false },
       ],
       gradient: 'from-blue-600 to-cyan-600',
       badge: '인기',
@@ -63,14 +79,12 @@ export default function PricingPage() {
       description: '본격적인 마케팅을 원하는 사장님',
       features: [
         { text: '하루 10개 생성', included: true },
-        { text: '전체 업종 20개 이용', included: true },
+        { text: '업종 7개 모두 사용', included: true },
         { text: '4개 플랫폼 지원', included: true },
         { text: 'AI 콘텐츠 생성', included: true },
-        { text: '예약 발행 무제한', included: true },
         { text: '모든 플러그인', included: true },
-        { text: '이메일 + 카톡 알림', included: true },
-        { text: '우선 지원', included: true },
-        { text: '분석 리포트', included: true },
+        { text: '예약 저장 + 이메일 알림', included: true },
+        { text: '우선 이메일 지원', included: true },
       ],
       gradient: 'from-purple-600 to-pink-600',
       badge: '추천',
@@ -86,15 +100,12 @@ export default function PricingPage() {
       description: '여러 매장을 운영하는 사장님',
       features: [
         { text: '하루 30개 생성', included: true },
-        { text: '전체 업종 무제한', included: true },
+        { text: '업종 7개 모두 사용', included: true },
         { text: '4개 플랫폼 지원', included: true },
         { text: 'AI 콘텐츠 생성', included: true },
-        { text: '예약 발행 무제한', included: true },
         { text: '모든 플러그인', included: true },
-        { text: '이메일 + 카톡 알림', included: true },
-        { text: '1:1 전담 지원', included: true },
-        { text: '상세 분석 리포트', included: true },
-        { text: '맞춤 컨설팅', included: true },
+        { text: '예약 저장 + 이메일 알림', included: true },
+        { text: '우선 이메일 지원', included: true },
       ],
       gradient: 'from-orange-600 to-red-600',
       badge: '최고급',
@@ -209,6 +220,8 @@ export default function PricingPage() {
                         router.push('/studio');
                       } else if (plan.id === 'enterprise') {
                         window.location.href = 'mailto:pernar.go@gmail.com?subject=엔터프라이즈 플랜 문의';
+                      } else if (plan.id === 'single') {
+                        router.push('/payment?plan=SINGLE_CONTENT');
                       } else {
                         router.push(`/payment?plan=${plan.id.toUpperCase()}`);
                       }

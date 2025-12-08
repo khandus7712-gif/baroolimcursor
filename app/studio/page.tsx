@@ -50,7 +50,7 @@ const PLUGINS = [
   { id: 'bookingCta', name: '예약 CTA', desc: '예약 유도 문구' },
   { id: 'hashtag', name: '해시태그', desc: '관련 해시태그 생성' },
 ];
-const MAX_IMAGES = 10;
+const MAX_IMAGES = 1; // 페이로드 크기 제한으로 1장만 허용
 
 interface GenerateResult {
   output: string;
@@ -118,6 +118,72 @@ function StudioPageContent() {
     return ALL_DOMAINS.filter(d => allowedDomainIds.includes(d.id));
   }, [userPlan]);
 
+  /**
+   * 이미지 압축 및 리사이즈
+   * @param file - 원본 파일
+   * @param maxWidth - 최대 너비 (기본 1920px)
+   * @param maxHeight - 최대 높이 (기본 1920px)
+   * @param quality - 품질 (0.0 ~ 1.0, 기본 0.8)
+   * @returns 압축된 File 객체
+   */
+  const compressImage = (file: File, maxWidth = 1920, maxHeight = 1920, quality = 0.8): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // 비율 유지하며 리사이즈
+          if (width > maxWidth || height > maxHeight) {
+            if (width > height) {
+              height = (height * maxWidth) / width;
+              width = maxWidth;
+            } else {
+              width = (width * maxHeight) / height;
+              height = maxHeight;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Canvas context를 가져올 수 없습니다.'));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error('이미지 압축에 실패했습니다.'));
+                return;
+              }
+              // 원본 파일명 유지하되 확장자는 jpeg로 변경
+              const fileName = file.name.replace(/\.[^/.]+$/, '.jpg');
+              const compressedFile = new File([blob], fileName, {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            },
+            'image/jpeg',
+            quality
+          );
+        };
+        img.onerror = () => reject(new Error('이미지를 로드할 수 없습니다.'));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('파일을 읽을 수 없습니다.'));
+      reader.readAsDataURL(file);
+    });
+  };
+
   const convertFileToDataUrl = (file: File) =>
     new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -141,12 +207,20 @@ function StudioPageContent() {
 
     const filesToAdd = incoming.slice(0, availableSlots);
     try {
-      const previews = await Promise.all(filesToAdd.map((file) => convertFileToDataUrl(file)));
-      setImageFiles((prev) => [...prev, ...filesToAdd]);
+      // 이미지 압축
+      setToast({ message: '이미지 압축 중...', type: 'warning' });
+      const compressedFiles = await Promise.all(
+        filesToAdd.map((file) => compressImage(file, 1920, 1920, 0.8))
+      );
+      
+      // 압축된 파일의 미리보기 생성
+      const previews = await Promise.all(compressedFiles.map((file) => convertFileToDataUrl(file)));
+      setImageFiles((prev) => [...prev, ...compressedFiles]);
       setImagePreviews((prev) => [...prev, ...previews]);
+      setToast({ message: '이미지가 압축되어 업로드되었습니다.', type: 'success' });
     } catch (error) {
-      console.error('Failed to read image files:', error);
-      setToast({ message: '이미지 파일을 불러오지 못했습니다.', type: 'error' });
+      console.error('Failed to process image files:', error);
+      setToast({ message: '이미지 파일을 처리하지 못했습니다.', type: 'error' });
     }
   };
 

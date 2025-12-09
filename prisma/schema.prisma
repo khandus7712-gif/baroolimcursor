@@ -13,9 +13,9 @@ datasource db {
 // 구독 플랜 타입
 enum SubscriptionPlan {
   FREE        // 평생 5회
-  BASIC       // 29,900원 - 하루 3개
-  PRO         // 49,900원 - 하루 10개
-  ENTERPRISE  // 79,900원 - 하루 30개
+  BASIC       // 49,900원 - 월 150개 (Starter)
+  PRO         // 79,000원 - 월 400개 (Growth)
+  ENTERPRISE  // (사용 안 함)
 }
 
 model User {
@@ -33,8 +33,8 @@ model User {
   
   // 생성 횟수 추적
   totalGenerations Int @default(0)  // FREE 플랜용 (평생 5회 제한)
-  dailyGenerationCount Int @default(0)  // 유료 플랜용 (일일 제한)
-  lastGenerationDate DateTime?  // 마지막 생성 날짜 (일일 카운트 리셋용)
+  monthlyGenerationCount Int @default(0)  // 유료 플랜용 (월간 제한)
+  lastGenerationMonth DateTime?  // 마지막 생성 월 (월간 카운트 리셋용, YYYY-MM-01 형식)
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

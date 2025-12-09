@@ -23,8 +23,8 @@ interface UserProfile {
   plan: string;
   planExpiry: string | null;
   totalGenerations: number;
-  dailyGenerationCount: number;
-  lastGenerationDate: string | null;
+  monthlyGenerationCount: number;
+  lastGenerationMonth: string | null;
   createdAt: string;
 }
 
@@ -32,7 +32,7 @@ interface PlanInfo {
   id: string;
   name: string;
   price: number;
-  dailyLimit: number | null;
+  monthlyLimit: number | null;
   totalLimit: number | null;
   features: string[];
 }
@@ -40,35 +40,27 @@ interface PlanInfo {
 const PLANS: PlanInfo[] = [
   {
     id: 'FREE',
-    name: '무료 플랜',
+    name: 'Free',
     price: 0,
-    dailyLimit: null,
+    monthlyLimit: null,
     totalLimit: 5,
-    features: ['평생 5회 무료', '모든 플랫폼 지원', '기본 AI 기능', '커뮤니티 지원']
+    features: ['평생 5회 무료', '4개 플랫폼 지원', '기본 AI 기능', '카드 등록 없이 사용']
   },
   {
     id: 'BASIC',
-    name: '베이직',
-    price: 29900,
-    dailyLimit: 3,
+    name: 'Starter',
+    price: 49900,
+    monthlyLimit: 150,
     totalLimit: null,
-    features: ['하루 3개 생성', '모든 플랫폼 지원', '고급 AI 기능', '이메일 지원', '예약 발행']
+    features: ['월 150개 생성', '인스타/블로그/스레드/GBP 전체 지원', '업종 7개 전체 제공', '모든 플러그인', '예약 저장 + 알림', '7일 100% 환불']
   },
   {
     id: 'PRO',
-    name: '프로',
-    price: 49900,
-    dailyLimit: 10,
+    name: 'Growth',
+    price: 79000,
+    monthlyLimit: 400,
     totalLimit: null,
-    features: ['하루 10개 생성', '모든 플랫폼 지원', '프리미엄 AI', '우선 지원', '예약 발행', '분석 리포트']
-  },
-  {
-    id: 'ENTERPRISE',
-    name: '엔터프라이즈',
-    price: 79900,
-    dailyLimit: 30,
-    totalLimit: null,
-    features: ['하루 30개 생성', '무제한 플랫폼', '커스텀 AI', '전담 매니저', '예약 발행', '고급 분석', 'API 제공']
+    features: ['월 400개 생성', '다점포 운영 최적화', '브랜드 톤 설정', '우선 지원', '모든 플랫폼 지원', '모든 플러그인', '향후 팀 계정 기능 예정']
   },
 ];
 
@@ -117,9 +109,25 @@ export default function MyPage() {
   const remainingGenerations = currentPlan?.totalLimit 
     ? currentPlan.totalLimit - profile.totalGenerations 
     : null;
-  const dailyRemaining = currentPlan?.dailyLimit 
-    ? currentPlan.dailyLimit - profile.dailyGenerationCount 
-    : null;
+  
+  // 월간 잔여 횟수 계산
+  let monthlyRemaining: number | null = null;
+  if (currentPlan?.monthlyLimit) {
+    const now = new Date();
+    const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    currentMonth.setHours(0, 0, 0, 0);
+    
+    let monthlyCount = profile.monthlyGenerationCount;
+    if (profile.lastGenerationMonth) {
+      const lastMonth = new Date(profile.lastGenerationMonth);
+      lastMonth.setHours(0, 0, 0, 0);
+      if (lastMonth.getTime() !== currentMonth.getTime()) {
+        monthlyCount = 0; // 월이 바뀌었으면 0으로 표시
+      }
+    }
+    
+    monthlyRemaining = currentPlan.monthlyLimit - monthlyCount;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-900 py-8 px-6">
@@ -238,27 +246,27 @@ export default function MyPage() {
                 )}
               </div>
             ) : (
-              // 유료 플랜 - 일일 제한
+              // 유료 플랜 - 월간 제한
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-white/80">오늘 남은 생성 횟수</span>
+                  <span className="text-white/80">이번 달 남은 생성 횟수</span>
                   <span className="text-2xl font-bold text-white">
-                    {dailyRemaining !== null ? dailyRemaining : 0} / {currentPlan?.dailyLimit || 0}회
+                    {monthlyRemaining !== null ? monthlyRemaining : 0} / {currentPlan?.monthlyLimit || 0}회
                   </span>
                 </div>
                 <div className="h-3 bg-white/10 rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-gradient-to-r from-brand-neon-purple to-brand-neon-pink transition-all"
                     style={{ 
-                      width: `${dailyRemaining !== null && currentPlan?.dailyLimit 
-                        ? (dailyRemaining / currentPlan.dailyLimit) * 100 
+                      width: `${monthlyRemaining !== null && currentPlan?.monthlyLimit 
+                        ? (monthlyRemaining / currentPlan.monthlyLimit) * 100 
                         : 0}%` 
                     }}
                   ></div>
                 </div>
                 <div className="mt-3 text-white/60 text-sm flex items-center gap-2">
                   <Clock className="w-4 h-4" />
-                  자정에 초기화됩니다
+                  매월 1일에 초기화됩니다
                 </div>
               </div>
             )}
@@ -313,8 +321,8 @@ export default function MyPage() {
                 </div>
                 
                 <div className="space-y-2 mb-6">
-                  {plan.dailyLimit && (
-                    <div className="text-white/70 text-sm">하루 {plan.dailyLimit}개</div>
+                  {plan.monthlyLimit && (
+                    <div className="text-white/70 text-sm">월 {plan.monthlyLimit}개</div>
                   )}
                   {plan.totalLimit && (
                     <div className="text-white/70 text-sm">평생 {plan.totalLimit}회</div>

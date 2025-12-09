@@ -17,8 +17,8 @@ import {
 interface UserProfile {
   plan: string;
   totalGenerations: number;
-  dailyGenerationCount: number;
-  lastGenerationDate: string | null;
+  monthlyGenerationCount: number;
+  lastGenerationMonth: string | null;
 }
 
 export default function HomePage() {
@@ -42,8 +42,8 @@ export default function HomePage() {
             setUserProfile({
               plan: data.plan,
               totalGenerations: data.totalGenerations || 0,
-              dailyGenerationCount: data.dailyGenerationCount || 0,
-              lastGenerationDate: data.lastGenerationDate,
+              monthlyGenerationCount: data.monthlyGenerationCount || 0,
+              lastGenerationMonth: data.lastGenerationMonth,
             });
           }
         })
@@ -61,26 +61,26 @@ export default function HomePage() {
       return 5 - userProfile.totalGenerations;
     } else {
       const limits: Record<string, number> = {
-        BASIC: 3,
-        PRO: 10,
-        ENTERPRISE: 30,
+        BASIC: 150, // Starter: 월 150개
+        PRO: 400, // Growth: 월 400개
       };
       const limit = limits[userProfile.plan] || 0;
       
-      // 날짜 체크
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      let dailyCount = userProfile.dailyGenerationCount;
+      // 월 체크
+      const now = new Date();
+      const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      currentMonth.setHours(0, 0, 0, 0);
+      let monthlyCount = userProfile.monthlyGenerationCount;
       
-      if (userProfile.lastGenerationDate) {
-        const lastDate = new Date(userProfile.lastGenerationDate);
-        lastDate.setHours(0, 0, 0, 0);
-        if (lastDate.getTime() !== today.getTime()) {
-          dailyCount = 0;
+      if (userProfile.lastGenerationMonth) {
+        const lastMonth = new Date(userProfile.lastGenerationMonth);
+        lastMonth.setHours(0, 0, 0, 0);
+        if (lastMonth.getTime() !== currentMonth.getTime()) {
+          monthlyCount = 0; // 월이 바뀌었으면 0
         }
       }
       
-      return limit - dailyCount;
+      return limit - monthlyCount;
     }
   };
 

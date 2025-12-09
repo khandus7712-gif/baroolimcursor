@@ -25,8 +25,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         plan: true,
         planExpiry: true,
         totalGenerations: true,
-        dailyGenerationCount: true,
-        lastGenerationDate: true,
+        monthlyGenerationCount: true,
+        lastGenerationMonth: true,
       },
     });
 
@@ -38,8 +38,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       plan: user.plan,
       planExpiry: user.planExpiry,
       totalGenerations: user.totalGenerations,
-      dailyGenerationCount: user.dailyGenerationCount,
-      lastGenerationDate: user.lastGenerationDate,
+      monthlyGenerationCount: user.monthlyGenerationCount,
+      lastGenerationMonth: user.lastGenerationMonth,
     });
   } catch (error) {
     console.error('User plan API error:', error);

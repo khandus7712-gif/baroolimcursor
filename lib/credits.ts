@@ -6,13 +6,13 @@
 import { prisma } from '@/lib/prisma';
 
 /**
- * 플랜별 일일 제한
+ * 플랜별 월간 제한
  */
-const PLAN_DAILY_LIMITS: Record<string, number> = {
-  FREE: 0, // FREE는 일일 제한 없음 (평생 5회만)
-  BASIC: 3,
-  PRO: 10,
-  ENTERPRISE: 30,
+const PLAN_MONTHLY_LIMITS: Record<string, number> = {
+  FREE: 0, // FREE는 월간 제한 없음 (평생 5회만)
+  BASIC: 150, // Starter: 월 150개
+  PRO: 400, // Growth: 월 400개
+  ENTERPRISE: 0, // 사용 안 함
 };
 
 /**
@@ -75,45 +75,46 @@ export async function checkGenerationLimit(userId: string): Promise<{
     };
   }
 
-  // 유료 플랜: 일일 제한
-  const dailyLimit = PLAN_DAILY_LIMITS[user.plan] || 0;
-  if (dailyLimit === 0) {
+  // 유료 플랜: 월간 제한
+  const monthlyLimit = PLAN_MONTHLY_LIMITS[user.plan] || 0;
+  if (monthlyLimit === 0) {
     return { canGenerate: true }; // 제한 없음
   }
 
-  // 날짜 체크 및 리셋
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // 월 체크 및 리셋
+  const now = new Date();
+  const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  currentMonth.setHours(0, 0, 0, 0);
 
-  const lastGenDate = user.lastGenerationDate;
-  if (lastGenDate) {
-    const lastDate = new Date(lastGenDate);
-    lastDate.setHours(0, 0, 0, 0);
+  const lastGenMonth = user.lastGenerationMonth;
+  if (lastGenMonth) {
+    const lastMonth = new Date(lastGenMonth);
+    lastMonth.setHours(0, 0, 0, 0);
 
-    // 날짜가 바뀌었으면 카운트 리셋
-    if (lastDate.getTime() !== today.getTime()) {
+    // 월이 바뀌었으면 카운트 리셋
+    if (lastMonth.getTime() !== currentMonth.getTime()) {
       await prisma.user.update({
         where: { id: userId },
         data: {
-          dailyGenerationCount: 0,
-          lastGenerationDate: today,
+          monthlyGenerationCount: 0,
+          lastGenerationMonth: currentMonth,
         },
       });
-      user.dailyGenerationCount = 0;
+      user.monthlyGenerationCount = 0;
     }
   }
 
-  if (user.dailyGenerationCount >= dailyLimit) {
+  if (user.monthlyGenerationCount >= monthlyLimit) {
     return {
       canGenerate: false,
-      error: `일일 생성 횟수(${dailyLimit}회)를 모두 사용하셨습니다. 내일 다시 시도하세요.`,
+      error: `이번 달 생성 횟수(${monthlyLimit}회)를 모두 사용하셨습니다. 다음 달에 다시 사용하실 수 있습니다.`,
       remaining: 0,
     };
   }
 
   return {
     canGenerate: true,
-    remaining: dailyLimit - user.dailyGenerationCount,
+    remaining: monthlyLimit - user.monthlyGenerationCount,
   };
 }
 
@@ -170,14 +171,18 @@ export async function deductGeneration(userId: string): Promise<boolean> {
       },
     });
   } else {
-    // 유료 플랜: 일일 카운트 증가
-    const lastGenDate = user.lastGenerationDate;
+    // 유료 플랜: 월간 카운트 증가
+    const now = new Date();
+    const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    currentMonth.setHours(0, 0, 0, 0);
+
+    const lastGenMonth = user.lastGenerationMonth;
     let shouldReset = false;
 
-    if (lastGenDate) {
-      const lastDate = new Date(lastGenDate);
-      lastDate.setHours(0, 0, 0, 0);
-      if (lastDate.getTime() !== today.getTime()) {
+    if (lastGenMonth) {
+      const lastMonth = new Date(lastGenMonth);
+      lastMonth.setHours(0, 0, 0, 0);
+      if (lastMonth.getTime() !== currentMonth.getTime()) {
         shouldReset = true;
       }
     } else {
@@ -187,8 +192,8 @@ export async function deductGeneration(userId: string): Promise<boolean> {
     await prisma.user.update({
       where: { id: userId },
       data: {
-        dailyGenerationCount: shouldReset ? 1 : { increment: 1 },
-        lastGenerationDate: today,
+        monthlyGenerationCount: shouldReset ? 1 : { increment: 1 },
+        lastGenerationMonth: currentMonth,
       },
     });
   }

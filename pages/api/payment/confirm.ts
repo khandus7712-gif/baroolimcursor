@@ -13,9 +13,8 @@ const PLANS: Record<
   { name: string; price: number; plan?: string; pass?: { uses: number; expiryDays?: number } }
 > = {
   SINGLE_CONTENT: { name: '단건 콘텐츠', price: 990, pass: { uses: 1, expiryDays: 90 } },
-  BASIC: { name: '베이직', price: 29900, plan: 'BASIC' },
-  PRO: { name: '프로', price: 49900, plan: 'PRO' },
-  ENTERPRISE: { name: '엔터프라이즈', price: 79900, plan: 'ENTERPRISE' },
+  BASIC: { name: 'Starter', price: 49900, plan: 'BASIC' },
+  PRO: { name: 'Growth', price: 79000, plan: 'PRO' },
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -103,6 +102,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const planExpiry = new Date();
       planExpiry.setMonth(planExpiry.getMonth() + 1);
 
+      // 월간 카운트 초기화 (이번 달 1일로 설정)
+      const now = new Date();
+      const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      currentMonth.setHours(0, 0, 0, 0);
+
       await prisma.user.update({
         where: {
           id: session.user.id,
@@ -110,9 +114,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         data: {
           plan: planInfo.plan as any,
           planExpiry,
-          // 일일 카운트 초기화
-          dailyGenerationCount: 0,
-          lastGenerationDate: new Date(),
+          // 월간 카운트 초기화
+          monthlyGenerationCount: 0,
+          lastGenerationMonth: currentMonth,
         },
       });
     } else {

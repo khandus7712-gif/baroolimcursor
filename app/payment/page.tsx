@@ -16,7 +16,7 @@ interface Plan {
   name: string;
   price: number;
   billingType: 'monthly' | 'single';
-  dailyLimit: number | null;
+  monthlyLimit: number | null;
   features: string[];
   popular?: boolean;
 }
@@ -27,7 +27,7 @@ const PLANS: Plan[] = [
     name: '단건 콘텐츠',
     price: 990,
     billingType: 'single',
-    dailyLimit: null,
+    monthlyLimit: null,
     features: [
       '콘텐츠 1개 생성 (블로그 포함 1차감)',
       '업종 7개 / 플랫폼 4개 모두 사용',
@@ -38,45 +38,36 @@ const PLANS: Plan[] = [
   },
   {
     id: 'BASIC',
-    name: '베이직',
-    price: 29900,
-    billingType: 'monthly',
-    dailyLimit: 3,
-    features: [
-      '하루 3개 생성',
-      '업종 7개 / 플랫폼 4개',
-      'AI 콘텐츠 생성 + 모든 플러그인',
-      '예약 저장 + 이메일 알림',
-      '이메일 지원',
-    ],
-  },
-  {
-    id: 'PRO',
-    name: '프로',
+    name: 'Starter',
     price: 49900,
     billingType: 'monthly',
-    dailyLimit: 10,
+    monthlyLimit: 150,
     features: [
-      '하루 10개 생성',
-      '업종 7개 / 플랫폼 4개',
-      'AI 콘텐츠 생성 + 모든 플러그인',
-      '예약 저장 + 이메일 알림',
-      '우선 이메일 지원',
+      '월 150개 생성',
+      '인스타 / 블로그 / 스레드 / GBP 전체 지원',
+      '업종 7개 전체 제공',
+      '예약·광고·해시태그·리뷰 자동 생성 플러그인',
+      '예약 저장 + 알림',
+      '7일 100% 환불',
     ],
     popular: true,
   },
   {
-    id: 'ENTERPRISE',
-    name: '엔터프라이즈',
-    price: 79900,
+    id: 'PRO',
+    name: 'Growth',
+    price: 79000,
     billingType: 'monthly',
-    dailyLimit: 30,
+    monthlyLimit: 400,
     features: [
-      '하루 30개 생성',
-      '업종 7개 / 플랫폼 4개',
-      'AI 콘텐츠 생성 + 모든 플러그인',
-      '예약 저장 + 이메일 알림',
-      '우선 이메일 지원',
+      '월 400개 생성',
+      '다점포 운영 최적화',
+      '브랜드 톤 설정',
+      '우선 지원',
+      '인스타 / 블로그 / 스레드 / GBP 전체 지원',
+      '업종 7개 전체 제공',
+      '모든 플러그인 포함',
+      '예약 저장 + 알림',
+      '향후 팀 계정 기능 예정',
     ],
   },
 ];

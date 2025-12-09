@@ -33,8 +33,8 @@ interface UserData {
   name: string | null;
   plan: string;
   totalGenerations: number;
-  dailyGenerationCount: number;
-  lastGenerationDate: string | null;
+  monthlyGenerationCount: number;
+  lastGenerationMonth: string | null;
   createdAt: string;
 }
 
@@ -333,16 +333,17 @@ export default function AdminDashboard() {
                           </td>
                           <td className="px-6 py-4">
                             {(() => {
-                              // 날짜 체크 및 리셋
-                              const today = new Date();
-                              today.setHours(0, 0, 0, 0);
+                              // 월 체크 및 리셋
+                              const now = new Date();
+                              const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                              currentMonth.setHours(0, 0, 0, 0);
                               
-                              let dailyCount = user.dailyGenerationCount;
-                              if (user.lastGenerationDate) {
-                                const lastDate = new Date(user.lastGenerationDate);
-                                lastDate.setHours(0, 0, 0, 0);
-                                if (lastDate.getTime() !== today.getTime()) {
-                                  dailyCount = 0; // 날짜가 바뀌었으면 0으로 표시
+                              let monthlyCount = user.monthlyGenerationCount;
+                              if (user.lastGenerationMonth) {
+                                const lastMonth = new Date(user.lastGenerationMonth);
+                                lastMonth.setHours(0, 0, 0, 0);
+                                if (lastMonth.getTime() !== currentMonth.getTime()) {
+                                  monthlyCount = 0; // 월이 바뀌었으면 0으로 표시
                                 }
                               }
 
@@ -362,12 +363,11 @@ export default function AdminDashboard() {
                                 );
                               } else {
                                 const limits: Record<string, number> = {
-                                  BASIC: 3,
-                                  PRO: 10,
-                                  ENTERPRISE: 30,
+                                  BASIC: 150, // Starter: 월 150개
+                                  PRO: 400, // Growth: 월 400개
                                 };
                                 const limit = limits[user.plan] || 0;
-                                const remaining = limit - dailyCount;
+                                const remaining = limit - monthlyCount;
                                 return (
                                   <div>
                                     <span className={`text-lg font-bold ${
@@ -376,7 +376,7 @@ export default function AdminDashboard() {
                                       {remaining}회 남음
                                     </span>
                                     <span className="text-white/40 text-sm ml-2">
-                                      (오늘 {dailyCount}/{limit} 사용)
+                                      (이번 달 {monthlyCount}/{limit} 사용)
                                     </span>
                                     <div className="text-white/30 text-xs mt-1">
                                       전체: {user.totalGenerations}회

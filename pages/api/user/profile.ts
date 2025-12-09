@@ -32,8 +32,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         plan: true,
         planExpiry: true,
         totalGenerations: true,
-        dailyGenerationCount: true,
-        lastGenerationDate: true,
+        monthlyGenerationCount: true,
+        lastGenerationMonth: true,
         createdAt: true,
       },
     });

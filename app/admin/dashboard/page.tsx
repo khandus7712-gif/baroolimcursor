@@ -34,6 +34,7 @@ interface UserData {
   plan: string;
   totalGenerations: number;
   dailyGenerationCount: number;
+  lastGenerationDate: string | null;
   createdAt: string;
 }
 
@@ -306,7 +307,7 @@ export default function AdminDashboard() {
                       <th className="px-6 py-4 text-left text-white/80 font-semibold">이메일</th>
                       <th className="px-6 py-4 text-left text-white/80 font-semibold">이름</th>
                       <th className="px-6 py-4 text-left text-white/80 font-semibold">플랜</th>
-                      <th className="px-6 py-4 text-left text-white/80 font-semibold">생성 횟수</th>
+                      <th className="px-6 py-4 text-left text-white/80 font-semibold">잔여 횟수</th>
                       <th className="px-6 py-4 text-left text-white/80 font-semibold">가입일</th>
                     </tr>
                   </thead>
@@ -330,13 +331,60 @@ export default function AdminDashboard() {
                               {user.plan}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-white">
-                            {user.totalGenerations}회
-                            {user.plan !== 'FREE' && (
-                              <span className="text-white/40 text-sm ml-2">
-                                (오늘: {user.dailyGenerationCount})
-                              </span>
-                            )}
+                          <td className="px-6 py-4">
+                            {(() => {
+                              // 날짜 체크 및 리셋
+                              const today = new Date();
+                              today.setHours(0, 0, 0, 0);
+                              
+                              let dailyCount = user.dailyGenerationCount;
+                              if (user.lastGenerationDate) {
+                                const lastDate = new Date(user.lastGenerationDate);
+                                lastDate.setHours(0, 0, 0, 0);
+                                if (lastDate.getTime() !== today.getTime()) {
+                                  dailyCount = 0; // 날짜가 바뀌었으면 0으로 표시
+                                }
+                              }
+
+                              if (user.plan === 'FREE') {
+                                const remaining = 5 - user.totalGenerations;
+                                return (
+                                  <div>
+                                    <span className={`text-lg font-bold ${
+                                      remaining <= 1 ? 'text-red-400' : remaining <= 2 ? 'text-yellow-400' : 'text-green-400'
+                                    }`}>
+                                      {remaining}회 남음
+                                    </span>
+                                    <span className="text-white/40 text-sm ml-2">
+                                      ({user.totalGenerations}/5 사용)
+                                    </span>
+                                  </div>
+                                );
+                              } else {
+                                const limits: Record<string, number> = {
+                                  BASIC: 3,
+                                  PRO: 10,
+                                  ENTERPRISE: 30,
+                                };
+                                const limit = limits[user.plan] || 0;
+                                const remaining = limit - dailyCount;
+                                return (
+                                  <div>
+                                    <span className={`text-lg font-bold ${
+                                      remaining <= 1 ? 'text-red-400' : remaining <= limit * 0.3 ? 'text-yellow-400' : 'text-green-400'
+                                    }`}>
+                                      {remaining}회 남음
+                                    </span>
+                                    <span className="text-white/40 text-sm ml-2">
+                                      (오늘 {dailyCount}/{limit} 사용)
+                                    </span>
+                                    <div className="text-white/30 text-xs mt-1">
+                                      전체: {user.totalGenerations}회
+                                    </div>
+                                  </div>
+                                );
+                              }
+                            })()}
                           </td>
                           <td className="px-6 py-4 text-white/60 text-sm">
                             {format(new Date(user.createdAt), 'yyyy-MM-dd', { locale: ko })}

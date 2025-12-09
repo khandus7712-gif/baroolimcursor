@@ -70,6 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         plan: true,
         totalGenerations: true,
         dailyGenerationCount: true,
+        lastGenerationDate: true,
         createdAt: true,
       },
     });

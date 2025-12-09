@@ -14,15 +14,77 @@ import {
   Instagram, Globe, Hash, Star, X, LogOut, User
 } from 'lucide-react';
 
+interface UserProfile {
+  plan: string;
+  totalGenerations: number;
+  dailyGenerationCount: number;
+  lastGenerationDate: string | null;
+}
+
 export default function HomePage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { data: session, status } = useSession();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // 사용자 프로필 정보 가져오기
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user) {
+      fetch('/api/user/plan')
+        .then(res => res.json())
+        .then(data => {
+          if (data.plan !== undefined) {
+            setUserProfile({
+              plan: data.plan,
+              totalGenerations: data.totalGenerations || 0,
+              dailyGenerationCount: data.dailyGenerationCount || 0,
+              lastGenerationDate: data.lastGenerationDate,
+            });
+          }
+        })
+        .catch(err => console.error('Failed to fetch user plan:', err));
+    } else {
+      setUserProfile(null);
+    }
+  }, [status, session]);
+
+  // 잔여 횟수 계산
+  const getRemainingCount = (): number | null => {
+    if (!userProfile) return null;
+
+    if (userProfile.plan === 'FREE') {
+      return 5 - userProfile.totalGenerations;
+    } else {
+      const limits: Record<string, number> = {
+        BASIC: 3,
+        PRO: 10,
+        ENTERPRISE: 30,
+      };
+      const limit = limits[userProfile.plan] || 0;
+      
+      // 날짜 체크
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      let dailyCount = userProfile.dailyGenerationCount;
+      
+      if (userProfile.lastGenerationDate) {
+        const lastDate = new Date(userProfile.lastGenerationDate);
+        lastDate.setHours(0, 0, 0, 0);
+        if (lastDate.getTime() !== today.getTime()) {
+          dailyCount = 0;
+        }
+      }
+      
+      return limit - dailyCount;
+    }
+  };
+
+  const remainingCount = getRemainingCount();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-900 text-white overflow-hidden">
@@ -71,10 +133,22 @@ export default function HomePage() {
             ) : session ? (
               <>
                 {/* 로그인된 경우 */}
-                <div className="flex items-center gap-2 text-white/90 px-4 py-2 font-medium">
+                <button
+                  onClick={() => router.push('/mypage')}
+                  className="flex items-center gap-2 text-white/90 hover:text-white px-4 py-2 font-medium rounded-lg hover:bg-white/10 transition-all group"
+                >
                   <User className="w-4 h-4" />
                   <span>{session.user?.name || session.user?.email?.split('@')[0]}</span>
-                </div>
+                  {remainingCount !== null && (
+                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                      remainingCount <= 1 ? 'bg-red-500/20 text-red-300' :
+                      remainingCount <= 3 ? 'bg-yellow-500/20 text-yellow-300' :
+                      'bg-green-500/20 text-green-300'
+                    }`}>
+                      {remainingCount}회 남음
+                    </span>
+                  )}
+                </button>
                 <button
                   onClick={() => signOut({ callbackUrl: '/' })}
                   className="flex items-center gap-2 text-white/80 hover:text-white transition-colors px-4 py-2 font-medium"
@@ -155,15 +229,23 @@ export default function HomePage() {
                 <div className="px-4 py-3 text-white/60">로딩 중...</div>
               ) : session ? (
                 <>
-                  <div className="px-4 py-3 text-white/90 border-t border-white/10 flex items-center gap-2">
-                    <User className="w-4 h-4" />
-                    <span className="text-sm">{session.user?.name || session.user?.email?.split('@')[0]}</span>
-                  </div>
                   <button
                     onClick={() => { router.push('/mypage'); setMobileMenuOpen(false); }}
-                    className="w-full text-left px-4 py-3 hover:bg-white/10 rounded-lg transition-colors text-white font-medium"
+                    className="w-full text-left px-4 py-3 hover:bg-white/10 rounded-lg transition-colors text-white font-medium border-t border-white/10 flex items-center justify-between"
                   >
-                    👤 마이페이지
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      <span className="text-sm">{session.user?.name || session.user?.email?.split('@')[0]}</span>
+                    </div>
+                    {remainingCount !== null && (
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                        remainingCount <= 1 ? 'bg-red-500/20 text-red-300' :
+                        remainingCount <= 3 ? 'bg-yellow-500/20 text-yellow-300' :
+                        'bg-green-500/20 text-green-300'
+                      }`}>
+                        {remainingCount}회
+                      </span>
+                    )}
                   </button>
                   <button
                     onClick={() => signOut({ callbackUrl: '/' })}

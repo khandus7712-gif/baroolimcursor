@@ -92,11 +92,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const domainId = fields.domainId as string;
     const platformId = fields.platformId as string;
     const notes = fields.notes as string;
-    const keywords = (fields.keywords as string)?.split(',').map(k => k.trim()).filter(k => k) || [];
+    
+    // keywords 처리: 배열이면 그대로 사용, 문자열이면 split
+    let keywords: string[] = [];
+    if (Array.isArray(fields.keywords)) {
+      keywords = fields.keywords.map(k => String(k).trim()).filter(k => k);
+    } else if (fields.keywords) {
+      keywords = String(fields.keywords).split(',').map(k => k.trim()).filter(k => k);
+    }
+    
     const brandName = fields.brandName as string;
     const region = fields.region as string;
     const link = fields.link as string;
-    const voiceHints = (fields.voiceHints as string)?.split(',').map(h => h.trim()).filter(h => h) || [];
+    
+    // voiceHints 처리: 배열이면 그대로 사용, 문자열이면 split
+    let voiceHints: string[] = [];
+    if (Array.isArray(fields.voiceHints)) {
+      voiceHints = fields.voiceHints.map(h => String(h).trim()).filter(h => h);
+    } else if (fields.voiceHints) {
+      voiceHints = String(fields.voiceHints).split(',').map(h => h.trim()).filter(h => h);
+    }
     const plugins = Array.isArray(fields.plugins) ? fields.plugins : fields.plugins ? [fields.plugins] : [];
     const enableSearch = fields.enableSearch === 'true';
 

@@ -354,7 +354,34 @@ function applyPlatformFormatting(text: string, platform: PlatformTemplate): stri
       formatted = formatted.replace(/\n{2,}/g, '\n');
       break;
     case 'blog':
-      // 블로그: 단락 구분 명확히
+      // 블로그: 마크다운 기호 및 불필요한 텍스트 제거 (복사-붙여넣기 편의성)
+      // 1. 마크다운 코드 블록 제거 (```text, ``` 등)
+      formatted = formatted.replace(/```[\w]*\n?/g, '');
+      formatted = formatted.replace(/```/g, '');
+      // 2. 마크다운 헤더 (#) 제거
+      formatted = formatted.replace(/^#{1,6}\s+/gm, '');
+      // 3. 마크다운 볼드 (**텍스트** 또는 __텍스트__) 제거
+      formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '$1');
+      formatted = formatted.replace(/__([^_]+)__/g, '$1');
+      // 4. 마크다운 리스트 기호 (*, -, +) 제거
+      formatted = formatted.replace(/^[\*\-\+]\s+/gm, '');
+      // 5. 마크다운 번호 리스트 (1., 2., 등) 제거
+      formatted = formatted.replace(/^\d+\.\s+/gm, '');
+      // 6. 마크다운 링크 [텍스트](URL) -> 텍스트만 남기기
+      formatted = formatted.replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1');
+      // 7. 영어 설명 텍스트 제거 (AI가 생성 과정을 설명하는 부분)
+      formatted = formatted.replace(/I have generated.*?requirements[^\n]*/gi, '');
+      formatted = formatted.replace(/Here is.*?copy[^\n]*/gi, '');
+      formatted = formatted.replace(/Title:.*?\n/gi, '');
+      formatted = formatted.replace(/Body:.*?\n/gi, '');
+      formatted = formatted.replace(/Call-to-Action:.*?\n/gi, '');
+      formatted = formatted.replace(/following all the guidelines[^\n]*/gi, '');
+      formatted = formatted.replace(/Okay, I'm ready[^\n]*/gi, '');
+      formatted = formatted.replace(/I have generated a blog post[^\n]*/gi, '');
+      formatted = formatted.replace(/including length, tone, structure[^\n]*/gi, '');
+      formatted = formatted.replace(/The post is SEO-friendly[^\n]*/gi, '');
+      formatted = formatted.replace(/aims to increase engagement[^\n]*/gi, '');
+      // 8. 단락 구분 명확히
       formatted = formatted.replace(/\n\n\n+/g, '\n\n');
       break;
     case 'gmb':

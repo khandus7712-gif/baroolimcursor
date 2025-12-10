@@ -8,6 +8,10 @@ import type { PlatformTemplate } from '@/types/platform';
 import foodProfile from '@/profiles/domains/food.json';
 import beautyProfile from '@/profiles/domains/beauty.json';
 import retailProfile from '@/profiles/domains/retail.json';
+import cafeProfile from '@/profiles/domains/cafe.json';
+import fitnessProfile from '@/profiles/domains/fitness.json';
+import petProfile from '@/profiles/domains/pet.json';
+import educationProfile from '@/profiles/domains/education.json';
 import instagramTemplate from '@/profiles/platforms/instagram.json';
 import blogTemplate from '@/profiles/platforms/blog.json';
 import threadsTemplate from '@/profiles/platforms/threads.json';
@@ -60,6 +64,10 @@ const domainProfiles: Record<string, DomainProfile> = {
   food: foodProfile as DomainProfile,
   beauty: beautyProfile as DomainProfile,
   retail: retailProfile as DomainProfile,
+  cafe: cafeProfile as DomainProfile,
+  fitness: fitnessProfile as DomainProfile,
+  pet: petProfile as DomainProfile,
+  education: educationProfile as DomainProfile,
 };
 
 /**

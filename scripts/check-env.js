@@ -66,5 +66,15 @@ if (allPassed) {
   }
 }
 
+// Google OAuth Redirect URI 확인
+if (process.env.GOOGLE_CLIENT_ID && process.env.NEXTAUTH_URL) {
+  console.log('\n🔗 Google OAuth Redirect URI 확인:');
+  const nextAuthUrl = process.env.NEXTAUTH_URL.replace(/\/$/, ''); // 끝의 슬래시 제거
+  const expectedCallbackUrl = `${nextAuthUrl}/api/auth/callback/google`;
+  console.log(`  예상 콜백 URL: ${expectedCallbackUrl}`);
+  console.log(`  ⚠️  Google Cloud Console의 "승인된 리디렉션 URI"에 위 URL이 정확히 등록되어 있어야 합니다.`);
+  console.log(`  📝 Google Cloud Console: https://console.cloud.google.com/apis/credentials\n`);
+}
+
 process.exit(allPassed ? 0 : 1);
 

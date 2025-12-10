@@ -1,12 +1,11 @@
 /**
- * 결제 준비 API
- * 주문 ID 생성 및 결제 정보 반환
+ * 할인 정보 확인 API
+ * 사전예약자 할인 적용 여부 확인
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
 import { calculateDiscount } from '@/lib/discount';
 
 const PLANS: Record<string, { name: string; price: number }> = {
@@ -27,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ error: '로그인이 필요합니다.' });
     }
 
-    const { planId, amount } = req.body;
+    const { planId } = req.body;
 
     // 플랜 유효성 검증
     if (!planId || !PLANS[planId]) {
@@ -36,43 +35,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const originalPrice = PLANS[planId].price;
 
-    // 할인 계산 (사전예약자 확인)
+    // 할인 계산
     const discountInfo = await calculateDiscount(originalPrice, session.user.email);
-    const finalAmount = discountInfo.finalPrice;
-
-    // 금액 검증 (변조 방지) - 할인 적용된 금액도 허용
-    if (amount !== originalPrice && amount !== finalAmount) {
-      return res.status(400).json({ error: '결제 금액이 일치하지 않습니다.' });
-    }
-
-    // 주문 ID 생성 (고유값)
-    const orderId = `ORDER_${session.user.id}_${Date.now()}`;
-    const orderName = `바로올림 ${PLANS[planId].name}`;
-
-    // TODO: 주문 정보를 DB에 임시 저장 (결제 완료 후 매칭용)
-    // await prisma.order.create({
-    //   data: {
-    //     orderId,
-    //     userId: session.user.id,
-    //     planId,
-    //     amount: finalAmount,
-    //     originalAmount: originalPrice,
-    //     discountAmount: discountInfo.discountAmount,
-    //     status: 'PENDING',
-    //   },
-    // });
 
     return res.status(200).json({
-      orderId,
-      orderName,
-      amount: finalAmount,
-      originalAmount: originalPrice,
+      originalAmount: discountInfo.originalPrice,
       discountAmount: discountInfo.discountAmount,
+      finalAmount: discountInfo.finalPrice,
       discountRate: discountInfo.discountRate,
       isDiscountApplied: discountInfo.isEligible,
     });
   } catch (error) {
-    console.error('Checkout API error:', error);
+    console.error('Discount API error:', error);
     return res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 }

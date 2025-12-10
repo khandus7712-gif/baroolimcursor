@@ -107,6 +107,13 @@ export default function WaitlistPage() {
                   <p className="text-white/60 text-sm">기본 5회 → 총 15회 무료</p>
                 </div>
               </li>
+              <li className="flex items-start gap-3">
+                <CheckCircle2 className="w-6 h-6 text-green-400 flex-shrink-0 mt-1" />
+                <div>
+                  <p className="text-white font-semibold">2026년 1월까지 30% 할인</p>
+                  <p className="text-white/60 text-sm">유료 플랜 가입 시 첫 달부터 적용</p>
+                </div>
+              </li>
             </ul>
           </div>
         </div>

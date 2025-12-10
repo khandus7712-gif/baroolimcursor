@@ -665,7 +665,7 @@ export default function HomePage() {
             <p className="text-base mb-2">© 2025 바로올림 | AI 마케팅 콘텐츠 생성 플랫폼</p>
             <p className="text-sm">Made with ❤️ by Baroolim Team</p>
             <p className="text-xs mt-4 text-white/40">
-              대표: 이주연 | 사업자등록번호: 308-32-01281<br />
+              상호: 바디편한 | 대표: 이주연 | 사업자등록번호: 308-32-01281<br />
               경남 창원시 의창구 북면 동곡로 33, 101-1304<br />
               전화: 010-5850-1255 | 이메일: pernar.go@gmail.com
             </p>

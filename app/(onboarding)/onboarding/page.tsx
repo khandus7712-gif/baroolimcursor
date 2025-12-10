@@ -20,13 +20,7 @@ const ALL_DOMAINS = [
   { id: 'education', name: '교육/학원' },
 ];
 
-// 플랜별 접근 가능한 업종
-const PLAN_DOMAINS: Record<string, string[]> = {
-  FREE: ['food', 'beauty', 'retail'],
-  BASIC: ['food', 'beauty', 'retail', 'cafe', 'fitness', 'pet', 'education'],
-  PRO: ['food', 'beauty', 'retail', 'cafe', 'fitness', 'pet', 'education'],
-  ENTERPRISE: ['food', 'beauty', 'retail', 'cafe', 'fitness', 'pet', 'education'],
-};
+// 모든 사용자가 7가지 업종 모두 사용 가능 (요금제는 생성 횟수만 제한)
 
 const KPIS = [
   '예약 전환율',
@@ -66,11 +60,10 @@ export default function OnboardingPage() {
     }
   }, [status, session]);
 
-  // 플랜별 접근 가능한 업종 필터링
+  // 모든 사용자가 7가지 업종 모두 사용 가능 (요금제는 생성 횟수만 제한)
   const availableDomains = useMemo(() => {
-    const allowedDomainIds = PLAN_DOMAINS[userPlan] || PLAN_DOMAINS.FREE;
-    return ALL_DOMAINS.filter(d => allowedDomainIds.includes(d.id));
-  }, [userPlan]);
+    return ALL_DOMAINS;
+  }, []);
 
   const handleKpiToggle = (kpi: string) => {
     setSelectedKpis((prev) => (prev.includes(kpi) ? prev.filter((k) => k !== kpi) : [...prev, kpi]));
@@ -150,11 +143,6 @@ export default function OnboardingPage() {
                 </option>
               ))}
             </select>
-            {availableDomains.length < ALL_DOMAINS.length && (
-              <p className="text-xs text-gray-500 mt-2">
-                현재 플랜에서는 {availableDomains.length}개 업종만 사용 가능합니다. 플랜을 업그레이드하면 더 많은 업종을 이용할 수 있습니다.
-              </p>
-            )}
           </div>
 
           {/* 목표(KPI) 체크 */}

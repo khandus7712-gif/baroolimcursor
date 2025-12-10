@@ -189,3 +189,5 @@ postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@aws-0-ap-northeast-2.pooler.
 
 **총 예상 시간: 약 15분**
 
+
+

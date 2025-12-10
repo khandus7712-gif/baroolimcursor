@@ -8,7 +8,7 @@
 import { useState, useEffect, Suspense, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { PLAN_DOMAINS, type SubscriptionPlan } from '@/lib/profileLoader';
+// 모든 사용자가 7가지 업종 모두 사용 가능 (요금제는 생성 횟수만 제한)
 
 // 동적 렌더링 강제
 export const dynamic = 'force-dynamic';
@@ -111,18 +111,10 @@ function StudioPageContent() {
     }
   }, [status, session]);
 
-  // 플랜별 접근 가능한 업종 필터링
+  // 모든 사용자가 7가지 업종 모두 사용 가능 (요금제는 생성 횟수만 제한)
   const availableDomains = useMemo(() => {
-    // ENTERPRISE 플랜은 모든 업종 접근 가능
-    if (userPlan === 'ENTERPRISE') {
-      console.log('✅ [Studio] ENTERPRISE 플랜: 모든 업종 접근 가능', { totalDomains: ALL_DOMAINS.length });
-      return ALL_DOMAINS;
-    }
-    
-    const allowedDomainIds = PLAN_DOMAINS[userPlan as SubscriptionPlan] || PLAN_DOMAINS.FREE;
-    console.log('🔍 [Studio] 업종 필터링:', { userPlan, allowedDomainIds, totalDomains: ALL_DOMAINS.length, filteredCount: ALL_DOMAINS.filter(d => allowedDomainIds.includes(d.id)).length });
-    return ALL_DOMAINS.filter(d => allowedDomainIds.includes(d.id));
-  }, [userPlan]);
+    return ALL_DOMAINS;
+  }, []);
 
   /**
    * 이미지 압축 및 리사이즈
@@ -671,11 +663,6 @@ function StudioPageContent() {
                     </button>
                   ))}
                 </div>
-                {availableDomains.length < ALL_DOMAINS.length && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    현재 플랜에서는 {availableDomains.length}개 업종만 사용 가능합니다. 플랜을 업그레이드하면 더 많은 업종을 이용할 수 있습니다.
-                  </p>
-                )}
               </div>
 
               {/* 메모 입력 */}

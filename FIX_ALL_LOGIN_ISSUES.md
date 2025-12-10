@@ -224,3 +224,5 @@ $env:DATABASE_URL="여기에_복사한_DATABASE_URL_붙여넣기"; npx prisma db
 
 **총 예상 시간: 약 20분**
 
+
+

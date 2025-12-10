@@ -8,6 +8,7 @@
 import { useState, useEffect, Suspense, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { PLAN_DOMAINS, type SubscriptionPlan } from '@/lib/profileLoader';
 
 // 동적 렌더링 강제
 export const dynamic = 'force-dynamic';
@@ -28,14 +29,6 @@ const ALL_DOMAINS = [
   { id: 'pet', name: '반려동물', emoji: '🐾' },
   { id: 'education', name: '교육/학원', emoji: '📚' },
 ];
-
-// 플랜별 접근 가능한 업종
-const PLAN_DOMAINS: Record<string, string[]> = {
-  FREE: ['food', 'beauty', 'retail'],
-  BASIC: ['food', 'beauty', 'retail', 'cafe', 'fitness', 'pet', 'education'],
-  PRO: ['food', 'beauty', 'retail', 'cafe', 'fitness', 'pet', 'education'],
-  ENTERPRISE: ['food', 'beauty', 'retail', 'cafe', 'fitness', 'pet', 'education'],
-};
 
 const PLATFORMS = [
   { id: 'instagram', name: 'Instagram', icon: Instagram, color: 'text-pink-500' },
@@ -101,20 +94,33 @@ function StudioPageContent() {
   // 사용자 플랜 정보 가져오기
   useEffect(() => {
     if (status === 'authenticated' && session?.user) {
+      console.log('🔍 [Studio] 사용자 정보:', { userId: session.user.id, email: session.user.email });
       fetch('/api/user/plan')
         .then(res => res.json())
         .then(data => {
+          console.log('🔍 [Studio] 플랜 정보:', data);
           if (data.plan) {
             setUserPlan(data.plan);
+            console.log('✅ [Studio] 플랜 설정됨:', data.plan);
           }
         })
-        .catch(err => console.error('Failed to fetch user plan:', err));
+        .catch(err => console.error('❌ [Studio] 플랜 정보 가져오기 실패:', err));
+    } else {
+      // 로그인하지 않은 경우 기본값 유지
+      setUserPlan('FREE');
     }
   }, [status, session]);
 
   // 플랜별 접근 가능한 업종 필터링
   const availableDomains = useMemo(() => {
-    const allowedDomainIds = PLAN_DOMAINS[userPlan] || PLAN_DOMAINS.FREE;
+    // ENTERPRISE 플랜은 모든 업종 접근 가능
+    if (userPlan === 'ENTERPRISE') {
+      console.log('✅ [Studio] ENTERPRISE 플랜: 모든 업종 접근 가능', { totalDomains: ALL_DOMAINS.length });
+      return ALL_DOMAINS;
+    }
+    
+    const allowedDomainIds = PLAN_DOMAINS[userPlan as SubscriptionPlan] || PLAN_DOMAINS.FREE;
+    console.log('🔍 [Studio] 업종 필터링:', { userPlan, allowedDomainIds, totalDomains: ALL_DOMAINS.length, filteredCount: ALL_DOMAINS.filter(d => allowedDomainIds.includes(d.id)).length });
     return ALL_DOMAINS.filter(d => allowedDomainIds.includes(d.id));
   }, [userPlan]);
 

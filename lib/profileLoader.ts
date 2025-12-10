@@ -39,10 +39,7 @@ export const PLAN_DOMAINS: Record<SubscriptionPlan, string[]> = {
   ENTERPRISE: [
     'food', 'beauty', 'retail',
     'cafe', 'fitness', 'pet',
-    'education', 'realestate', 'auto', 'travel',
-    'medical', 'legal', 'interior',
-    'flower', 'laundry', 'photo', 'print',
-    'repair', 'rental', 'hotel', 'spa'
+    'education'
   ]
 };
 

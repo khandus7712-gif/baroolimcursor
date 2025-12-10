@@ -36,6 +36,12 @@ const TEST_ACCOUNTS = [
     name: '결제 테스트',
     id: 'test-user-payment',
   },
+  {
+    email: 'admin@baroolim.com',
+    password: 'admin1234',
+    name: '관리자',
+    id: 'admin-user',
+  },
 ] as const;
 
 // --- 환경변수 체크 로그 (서버 로그용, 문제되면 지워도 됨) ---
@@ -174,7 +180,34 @@ export const authOptions: NextAuthOptions = {
           provider: account?.provider ?? 'credentials',
         });
 
-        token.sub = (user as any).id;
+        // 테스트 계정(Credentials Provider)인 경우, DB에서 실제 사용자 ID를 찾아서 매핑
+        if (account?.provider === 'credentials' && user.email) {
+          try {
+            const dbUser = await prisma.user.findUnique({
+              where: { email: user.email },
+              select: { id: true },
+            });
+            
+            if (dbUser) {
+              console.log('✅ [AUTH] 테스트 계정 → DB 사용자 매핑:', {
+                testId: (user as any).id,
+                dbId: dbUser.id,
+                email: user.email,
+              });
+              token.sub = dbUser.id; // 실제 DB 사용자 ID로 교체
+            } else {
+              // DB에 사용자가 없으면 테스트 계정 ID 유지
+              token.sub = (user as any).id;
+            }
+          } catch (error) {
+            console.error('🔴 [AUTH] DB 사용자 조회 실패:', error);
+            token.sub = (user as any).id; // 오류 시 테스트 계정 ID 유지
+          }
+        } else {
+          // OAuth 로그인인 경우 그대로 사용
+          token.sub = (user as any).id;
+        }
+
         token.email = user.email;
         token.name = user.name;
         token.picture = user.image;

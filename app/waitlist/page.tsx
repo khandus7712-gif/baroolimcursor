@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Sparkles, Mail, User, Building2, Phone, MessageSquare, CheckCircle2, TrendingUp } from 'lucide-react';
+import { Sparkles, Mail, User, Building2, Phone, MessageSquare, CheckCircle2 } from 'lucide-react';
 
 export default function WaitlistPage() {
   const router = useRouter();
@@ -95,18 +95,11 @@ export default function WaitlistPage() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 sm:gap-8 mb-8 sm:mb-12">
-          {/* 혜택 카드 */}
+        {/* 혜택 카드 */}
+        <div className="max-w-2xl mx-auto mb-8 sm:mb-12">
           <div className="bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 p-6 sm:p-8">
             <h3 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">🎁 사전예약 특별 혜택</h3>
             <ul className="space-y-4">
-              <li className="flex items-start gap-3">
-                <CheckCircle2 className="w-6 h-6 text-green-400 flex-shrink-0 mt-1" />
-                <div>
-                  <p className="text-white font-semibold">출시 즉시 알림</p>
-                  <p className="text-white/60 text-sm">가장 먼저 사용해보세요</p>
-                </div>
-              </li>
               <li className="flex items-start gap-3">
                 <CheckCircle2 className="w-6 h-6 text-green-400 flex-shrink-0 mt-1" />
                 <div>
@@ -114,49 +107,7 @@ export default function WaitlistPage() {
                   <p className="text-white/60 text-sm">기본 5회 → 총 15회 무료</p>
                 </div>
               </li>
-              <li className="flex items-start gap-3">
-                <CheckCircle2 className="w-6 h-6 text-green-400 flex-shrink-0 mt-1" />
-                <div>
-                  <p className="text-white font-semibold">첫 달 30% 할인</p>
-                  <p className="text-white/60 text-sm">유료 플랜 가입 시</p>
-                </div>
-              </li>
-              <li className="flex items-start gap-3">
-                <CheckCircle2 className="w-6 h-6 text-green-400 flex-shrink-0 mt-1" />
-                <div>
-                  <p className="text-white font-semibold">1:1 온보딩 지원</p>
-                  <p className="text-white/60 text-sm">사용법 무료 컨설팅</p>
-                </div>
-              </li>
             </ul>
-          </div>
-
-          {/* 통계 카드 */}
-          <div className="bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 p-6 sm:p-8">
-            <h3 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">📊 현재 현황</h3>
-            <div className="space-y-6">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-white/80">사전예약</span>
-                  <span className="text-2xl font-bold text-brand-neon-purple">0명</span>
-                </div>
-                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-brand-neon-purple to-brand-neon-pink w-0"></div>
-                </div>
-              </div>
-              <div className="pt-6 border-t border-white/10">
-                <div className="flex items-center gap-3 mb-3">
-                  <TrendingUp className="w-5 h-5 text-green-400" />
-                  <span className="text-white font-semibold">출시 예정일</span>
-                </div>
-                <p className="text-3xl font-black text-white">
-                  11월 18일
-                </p>
-                <p className="text-white/60 text-sm mt-2">
-                  월요일 오전 10시
-                </p>
-              </div>
-            </div>
           </div>
         </div>
 

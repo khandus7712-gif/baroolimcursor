@@ -68,7 +68,29 @@ async function parseFormData(req: NextApiRequest): Promise<{
 async function fileToBase64(filePath: string): Promise<string> {
   const fileBuffer = await fs.readFile(filePath);
   const base64 = fileBuffer.toString('base64');
-  const mimeType = 'image/jpeg'; // 기본값, 실제로는 파일 확장자로 판단
+  
+  // 파일 확장자로 MIME 타입 판단
+  const ext = filePath.toLowerCase().split('.').pop();
+  let mimeType = 'image/jpeg'; // 기본값
+  
+  switch (ext) {
+    case 'jpg':
+    case 'jpeg':
+      mimeType = 'image/jpeg';
+      break;
+    case 'png':
+      mimeType = 'image/png';
+      break;
+    case 'gif':
+      mimeType = 'image/gif';
+      break;
+    case 'webp':
+      mimeType = 'image/webp';
+      break;
+    default:
+      mimeType = 'image/jpeg';
+  }
+  
   return `data:${mimeType};base64,${base64}`;
 }
 

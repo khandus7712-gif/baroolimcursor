@@ -119,6 +119,13 @@ export const authOptions: NextAuthOptions = {
           GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID!,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+            authorization: {
+              params: {
+                prompt: 'consent',
+                access_type: 'offline',
+                response_type: 'code',
+              },
+            },
           }),
         ]
       : []),
@@ -134,11 +141,31 @@ export const authOptions: NextAuthOptions = {
   ],
 
   /**
-   * 콜백들: DB를 전혀 호출하지 않고
-   * 토큰/세션에 최소 정보만 넣어서 돌린다.
+   * 콜백들: OAuth 계정 생성 및 세션 관리
    */
   callbacks: {
-    async jwt({ token, user, account }) {
+    async signIn({ user, account, profile }) {
+      // OAuth 로그인 시 계정 생성
+      if (account?.provider === 'google' || account?.provider === 'kakao') {
+        try {
+          console.log('🔵 [AUTH] OAuth 로그인 시도:', {
+            provider: account.provider,
+            email: user.email,
+            accountId: account.providerAccountId,
+          });
+
+          // PrismaAdapter가 자동으로 계정을 생성/연결하므로
+          // 여기서는 true만 반환하면 됨
+          return true;
+        } catch (error) {
+          console.error('🔴 [AUTH] OAuth 로그인 오류:', error);
+          return false;
+        }
+      }
+      return true;
+    },
+
+    async jwt({ token, user, account, profile }) {
       // 로그인 시도 직후에는 user가 들어온다
       if (user) {
         console.log('🔵 [DEBUG] JWT 생성:', {
@@ -150,6 +177,7 @@ export const authOptions: NextAuthOptions = {
         token.sub = (user as any).id;
         token.email = user.email;
         token.name = user.name;
+        token.picture = user.image;
       }
       return token;
     },
@@ -159,6 +187,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).id = token.sub;
         session.user.email = token.email as string | null | undefined;
         session.user.name = token.name as string | null | undefined;
+        session.user.image = token.picture as string | null | undefined;
       }
 
       console.log('🔵 [DEBUG] 세션 생성:', {
@@ -168,6 +197,18 @@ export const authOptions: NextAuthOptions = {
       });
 
       return session;
+    },
+
+    async redirect({ url, baseUrl }) {
+      // 상대 URL인 경우 baseUrl과 결합
+      if (url.startsWith('/')) {
+        return `${baseUrl}${url}`;
+      }
+      // 같은 도메인인지 확인
+      if (new URL(url).origin === baseUrl) {
+        return url;
+      }
+      return baseUrl;
     },
   },
 

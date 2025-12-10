@@ -30,17 +30,19 @@ function LoginPageContent() {
         'Configuration': '서버 설정 오류가 발생했습니다. 관리자에게 문의하세요.',
         'AccessDenied': '로그인 접근이 거부되었습니다.',
         'Verification': '인증 오류가 발생했습니다. 다시 시도해주세요.',
-        'OAuthSignin': 'OAuth 로그인 초기화 오류가 발생했습니다.',
-        'OAuthCallback': 'OAuth 콜백 처리 오류가 발생했습니다.',
-        'OAuthCreateAccount': '계정 생성 오류가 발생했습니다.',
+        'OAuthSignin': 'OAuth 로그인 초기화 오류가 발생했습니다. Google Cloud Console의 Redirect URI 설정을 확인해주세요.',
+        'OAuthCallback': 'OAuth 콜백 처리 오류가 발생했습니다. Google Cloud Console의 Redirect URI가 올바르게 설정되었는지 확인해주세요.',
+        'OAuthCreateAccount': '계정 생성 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
         'EmailCreateAccount': '이메일 계정 생성 오류가 발생했습니다.',
-        'Callback': '콜백 처리 오류가 발생했습니다.',
+        'Callback': '콜백 처리 오류가 발생했습니다. Google Cloud Console의 Redirect URI 설정을 확인해주세요.',
         'OAuthAccountNotLinked': '이 이메일은 다른 계정과 연결되어 있습니다.',
         'EmailSignin': '이메일 로그인 오류가 발생했습니다.',
         'CredentialsSignin': '로그인 정보가 올바르지 않습니다.',
         'SessionRequired': '로그인이 필요합니다.',
       };
-      setError(errorMessages[errorParam] || `로그인 오류: ${errorParam}`);
+      const message = errorMessages[errorParam] || `로그인 오류: ${errorParam}`;
+      setError(message);
+      console.error('🔴 로그인 에러:', errorParam, message);
     }
   }, [errorParam]);
 

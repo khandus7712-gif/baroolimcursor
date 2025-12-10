@@ -28,10 +28,23 @@ export async function generateContent(
     if (imageBase64) {
       // 멀티모달 (이미지 + 텍스트)
       // Base64 이미지를 파트로 변환
+      const mimeMatch = imageBase64.match(/^data:image\/(\w+);base64,/);
+      let mimeType = 'image/jpeg'; // 기본값
+      
+      if (mimeMatch) {
+        const imageType = mimeMatch[1].toLowerCase();
+        // jpg를 jpeg로 정규화하고 image/ 접두사 추가
+        if (imageType === 'jpg') {
+          mimeType = 'image/jpeg';
+        } else {
+          mimeType = `image/${imageType}`;
+        }
+      }
+      
       const imagePart = {
         inlineData: {
           data: imageBase64.replace(/^data:image\/\w+;base64,/, ''),
-          mimeType: imageBase64.match(/^data:image\/(\w+);base64,/)?.[1] || 'image/jpeg',
+          mimeType: mimeType,
         },
       };
 

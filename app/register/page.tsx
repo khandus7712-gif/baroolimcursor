@@ -23,7 +23,9 @@ function RegisterPageContent() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('🔵 회원가입 시작:', { email, name });
+    e.stopPropagation(); // 이벤트 전파 중단
+    
+    console.log('🔵 회원가입 시작:', { email, name, passwordLength: password.length });
 
     setIsLoading(true);
     setError('');
@@ -134,7 +136,15 @@ function RegisterPageContent() {
           )}
 
           {/* 회원가입 폼 */}
-          <form onSubmit={handleRegister} noValidate className="space-y-4">
+          <form 
+            onSubmit={handleRegister} 
+            noValidate 
+            className="space-y-4"
+            onInvalid={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
             <div>
               <label className="block text-white/90 font-medium mb-2 text-sm">
                 이름 (선택사항)

@@ -2,7 +2,7 @@
  * 이메일/비밀번호 회원가입 API
  */
 
-import 'server-only'; // 이 파일이 서버 사이드에서만 실행되도록 보장
+import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcrypt';
@@ -10,17 +10,21 @@ import bcrypt from 'bcrypt';
 export async function POST(request: NextRequest) {
   try {
     // Request body 파싱
-    let body;
+    let body: any;
     try {
       body = await request.json();
-    } catch (parseError) {
+    } catch {
       return NextResponse.json(
         { error: '요청 데이터 형식이 올바르지 않습니다.' },
         { status: 400 }
       );
     }
 
-    const { email, password, name } = body;
+    const { email, password, name } = body as {
+      email?: string;
+      password?: string;
+      name?: string;
+    };
 
     // 입력 검증
     if (!email || typeof email !== 'string') {
@@ -91,7 +95,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 비밀번호 해시
-    let hashedPassword;
+    let hashedPassword: string;
     try {
       hashedPassword = await bcrypt.hash(password, 10);
     } catch (hashError) {
@@ -120,7 +124,7 @@ export async function POST(request: NextRequest) {
       });
     } catch (createError: any) {
       console.error('🔴 [REGISTER] 사용자 생성 오류:', createError);
-      
+
       // Prisma unique constraint 오류 처리
       if (createError.code === 'P2002') {
         return NextResponse.json(
@@ -162,5 +166,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
 

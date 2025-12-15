@@ -2,13 +2,13 @@
  * 이메일/비밀번호 회원가입 API
  */
 
+import 'server-only'; // 이 파일이 서버 사이드에서만 실행되도록 보장
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import bcrypt from 'bcrypt';
 
 export async function POST(request: NextRequest) {
   try {
-    // bcrypt는 서버 사이드 전용이므로 동적 import 사용
-    const bcrypt = await import('bcrypt');
     
     const body = await request.json();
     const { email, password, name } = body;
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 비밀번호 해시
-    const hashedPassword = await bcrypt.default.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // 사용자 생성
     const user = await prisma.user.create({

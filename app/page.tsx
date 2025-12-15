@@ -92,7 +92,11 @@ export default function HomePage() {
       <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-black/50 border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-brand-neon-purple drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]" />
+            <img 
+              src="/logo.svg" 
+              alt="바로올림" 
+              className="w-6 h-6 sm:w-8 sm:h-8 drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]"
+            />
             <span className="text-xl sm:text-2xl font-black text-white">바로올림</span>
           </div>
           
@@ -507,7 +511,11 @@ export default function HomePage() {
             <div className="group relative bg-gradient-to-br from-cyan-900/50 to-cyan-900/20 backdrop-blur-xl rounded-3xl border border-white/20 p-8 hover:border-brand-neon-cyan/70 transition-all hover:shadow-[0_0_40px_rgba(6,182,212,0.5)]">
               <div className="absolute inset-0 bg-gradient-to-br from-brand-neon-cyan/0 to-brand-neon-cyan/10 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <div className="relative z-10">
-                <Sparkles className="w-16 h-16 text-brand-neon-cyan mb-6 drop-shadow-[0_0_10px_rgba(6,182,212,0.8)]" />
+                <img 
+                  src="/logo.svg" 
+                  alt="바로올림" 
+                  className="w-16 h-16 mb-6 drop-shadow-[0_0_10px_rgba(6,182,212,0.8)]"
+                />
                 <h3 className="text-2xl font-bold mb-4 text-white">AI 최적화</h3>
                 <p className="text-white/80 text-base leading-relaxed">
                   업종별 특화된 AI가 해시태그, 이모지, 톤앤매너까지 자동 최적화

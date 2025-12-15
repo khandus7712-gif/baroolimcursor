@@ -8,7 +8,7 @@
 import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Sparkles, Check, CreditCard, Shield, Zap, Star } from 'lucide-react';
+import { Check, CreditCard, Shield, Zap, Star } from 'lucide-react';
 import { loadTossPayments } from '@tosspayments/payment-sdk';
 
 interface Plan {
@@ -236,7 +236,11 @@ function PaymentContent() {
         {/* 헤더 */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <Sparkles className="w-12 h-12 text-brand-neon-purple" />
+            <img 
+              src="/logo.svg" 
+              alt="바로올림" 
+              className="w-12 h-12 drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]"
+            />
             <h1 className="text-4xl font-black text-white">결제하기</h1>
           </div>
           <p className="text-white/70 text-lg">

@@ -115,7 +115,11 @@ export default function AdminDashboard() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-8">
           <div>
             <div className="flex items-center gap-2 sm:gap-3 mb-2">
-              <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 text-brand-neon-purple" />
+              <img 
+                src="/logo.svg" 
+                alt="바로올림" 
+                className="w-8 h-8 sm:w-10 sm:h-10 drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]"
+              />
               <h1 className="text-2xl sm:text-4xl font-black text-white">관리자 대시보드</h1>
             </div>
             <p className="text-sm sm:text-base text-white/60">바로올림 운영 현황을 한눈에</p>

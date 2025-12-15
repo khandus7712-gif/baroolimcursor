@@ -1,0 +1,42 @@
+<svg width="64" height="80" viewBox="0 0 64 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="flameGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#FF6B35;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#EA4335;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Rocket Ship Icon - Clear and recognizable -->
+  <g transform="translate(32, 8)">
+    <!-- Main rocket body (white, cylindrical) -->
+    <rect x="-8" y="0" width="16" height="50" fill="white" stroke="#E0E0E0" stroke-width="1.5" rx="2"/>
+    
+    <!-- Red nose cone (sharp triangular tip) -->
+    <path d="M0 0 L-8 10 L8 10 Z" fill="#EA4335" stroke="#CC0000" stroke-width="1.5"/>
+    
+    <!-- Blue circular window (centered on body) -->
+    <circle cx="0" cy="28" r="7" fill="#4285F4" filter="url(#glow)"/>
+    <ellipse cx="-1.5" cy="26.5" rx="3" ry="3.5" fill="white" opacity="0.9"/>
+    
+    <!-- Red/Orange side fins (triangular, prominent) -->
+    <path d="M-8 50 L-14 65 L-8 58 Z" fill="#EA4335" stroke="#CC0000" stroke-width="1.5"/>
+    <path d="M8 50 L14 65 L8 58 Z" fill="#EA4335" stroke="#CC0000" stroke-width="1.5"/>
+    
+    <!-- Engine flames (orange/yellow, prominent at bottom) -->
+    <path d="M-8 50 L-10 68 L-5 68 Z" fill="url(#flameGradient)" filter="url(#glow)"/>
+    <path d="M0 50 L0 70 L6 68 Z" fill="url(#flameGradient)" filter="url(#glow)"/>
+    <path d="M8 50 L10 68 L5 68 Z" fill="url(#flameGradient)" filter="url(#glow)"/>
+    
+    <!-- Additional inner flames for depth -->
+    <path d="M-4 50 L-5 65 L-2 65 Z" fill="#FFD700" opacity="0.9"/>
+    <path d="M4 50 L5 65 L2 65 Z" fill="#FFD700" opacity="0.9"/>
+  </g>
+</svg>

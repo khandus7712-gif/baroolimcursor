@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Sparkles, Mail, User, Building2, Phone, MessageSquare, CheckCircle2 } from 'lucide-react';
+import { Mail, User, Building2, Phone, MessageSquare, CheckCircle2 } from 'lucide-react';
 
 export default function WaitlistPage() {
   const router = useRouter();
@@ -83,7 +83,11 @@ export default function WaitlistPage() {
         {/* 헤더 */}
         <div className="text-center mb-8 sm:mb-12">
           <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-            <Sparkles className="w-8 h-8 sm:w-12 sm:h-12 text-brand-neon-purple drop-shadow-[0_0_20px_rgba(168,85,247,0.8)]" />
+            <img 
+              src="/logo.svg" 
+              alt="바로올림" 
+              className="w-8 h-8 sm:w-12 sm:h-12 drop-shadow-[0_0_20px_rgba(168,85,247,0.8)]"
+            />
             <span className="text-2xl sm:text-4xl font-black text-white">바로올림</span>
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-3 sm:mb-4">

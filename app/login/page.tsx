@@ -7,7 +7,7 @@
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
-import { Sparkles, Mail, Lock, ArrowRight } from 'lucide-react';
+import { Mail, Lock, ArrowRight } from 'lucide-react';
 
 // 동적 렌더링 강제 (useSearchParams 사용)
 export const dynamic = 'force-dynamic';
@@ -129,7 +129,11 @@ function LoginPageContent() {
         {/* 로고 */}
         <div className="text-center mb-10">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <Sparkles className="w-12 h-12 text-brand-neon-purple drop-shadow-[0_0_20px_rgba(168,85,247,0.8)]" />
+            <img 
+              src="/logo.svg" 
+              alt="바로올림" 
+              className="w-12 h-12 drop-shadow-[0_0_20px_rgba(168,85,247,0.8)]"
+            />
             <span className="text-4xl font-black text-white">바로올림</span>
           </div>
           <p className="text-white/70 text-lg">
@@ -256,6 +260,17 @@ function LoginPageContent() {
               <ArrowRight className="w-5 h-5" />
             </button>
           </form>
+
+          {/* 회원가입 링크 */}
+          <p className="mt-4 text-center text-white/60 text-sm">
+            계정이 없으신가요?{' '}
+            <button
+              onClick={() => router.push('/register')}
+              className="text-brand-neon-purple hover:underline font-medium"
+            >
+              회원가입
+            </button>
+          </p>
 
           {/* 안내 텍스트 */}
           <p className="mt-6 text-center text-white/60 text-sm">

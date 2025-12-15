@@ -353,7 +353,11 @@ export default function MyPage() {
             onClick={() => router.push('/studio')}
             className="bg-white/10 hover:bg-white/20 backdrop-blur-xl rounded-2xl border border-white/20 p-6 text-left transition-all group"
           >
-            <Sparkles className="w-8 h-8 text-brand-neon-purple mb-3 group-hover:scale-110 transition-transform" />
+            <img 
+              src="/logo.svg" 
+              alt="바로올림" 
+              className="w-8 h-8 mb-3 group-hover:scale-110 transition-transform drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]"
+            />
             <div className="text-lg font-bold text-white mb-1">콘텐츠 생성</div>
             <div className="text-white/60 text-sm">새로운 콘텐츠 만들기</div>
           </button>

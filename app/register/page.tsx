@@ -36,6 +36,14 @@ function RegisterPageContent() {
       return;
     }
 
+    // 이메일 형식 검증
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('올바른 이메일 형식이 아닙니다.');
+      setIsLoading(false);
+      return;
+    }
+
     if (password.length < 6) {
       setError('비밀번호는 최소 6자 이상이어야 합니다.');
       setIsLoading(false);
@@ -151,7 +159,7 @@ function RegisterPageContent() {
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
                 <input
-                  type="email"
+                  type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="your@email.com"

@@ -71,10 +71,20 @@ function RegisterPageContent() {
         }),
       });
 
-      const data = await response.json();
+      // 응답 텍스트 먼저 확인
+      const responseText = await response.text();
+      console.log('🔵 [REGISTER] 응답 상태:', response.status, '응답 본문:', responseText);
+
+      let data;
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch (parseError) {
+        console.error('🔴 [REGISTER] JSON 파싱 오류:', parseError, '원본 응답:', responseText);
+        throw new Error('서버 응답을 처리할 수 없습니다. 잠시 후 다시 시도해주세요.');
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || '회원가입에 실패했습니다.');
+        throw new Error(data.error || `회원가입에 실패했습니다. (${response.status})`);
       }
 
       console.log('✅ 회원가입 성공:', data);

@@ -134,7 +134,7 @@ function RegisterPageContent() {
           )}
 
           {/* 회원가입 폼 */}
-          <form onSubmit={handleRegister} className="space-y-4">
+          <form onSubmit={handleRegister} noValidate className="space-y-4">
             <div>
               <label className="block text-white/90 font-medium mb-2 text-sm">
                 이름 (선택사항)
@@ -163,7 +163,6 @@ function RegisterPageContent() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="your@email.com"
-                  required
                   disabled={isLoading}
                   className="w-full bg-white/5 border border-white/20 rounded-xl px-12 py-4 text-white placeholder-white/40 focus:outline-none focus:border-brand-neon-purple focus:ring-2 focus:ring-brand-neon-purple/50 transition-all disabled:opacity-50"
                 />
@@ -181,8 +180,6 @@ function RegisterPageContent() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="최소 6자 이상"
-                  required
-                  minLength={6}
                   disabled={isLoading}
                   className="w-full bg-white/5 border border-white/20 rounded-xl px-12 py-4 text-white placeholder-white/40 focus:outline-none focus:border-brand-neon-purple focus:ring-2 focus:ring-brand-neon-purple/50 transition-all disabled:opacity-50"
                 />
@@ -200,7 +197,6 @@ function RegisterPageContent() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="비밀번호를 다시 입력하세요"
-                  required
                   disabled={isLoading}
                   className="w-full bg-white/5 border border-white/20 rounded-xl px-12 py-4 text-white placeholder-white/40 focus:outline-none focus:border-brand-neon-purple focus:ring-2 focus:ring-brand-neon-purple/50 transition-all disabled:opacity-50"
                 />

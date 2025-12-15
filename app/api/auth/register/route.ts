@@ -3,11 +3,13 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import bcrypt from 'bcrypt';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
+    // bcrypt는 서버 사이드 전용이므로 동적 import 사용
+    const bcrypt = await import('bcrypt');
+    
     const body = await request.json();
     const { email, password, name } = body;
 
@@ -51,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 비밀번호 해시
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.default.hash(password, 10);
 
     // 사용자 생성
     const user = await prisma.user.create({

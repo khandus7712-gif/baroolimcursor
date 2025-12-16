@@ -7,11 +7,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcrypt';
 
-// OPTIONS 핸들러 추가 (CORS preflight)
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
+// OPTIONS 핸들러 (CORS preflight)
 export async function OPTIONS() {
-  return NextResponse.json({}, { status: 200 });
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
 }
 
+// POST 핸들러
 export async function POST(request: NextRequest) {
   try {
     // Request body 파싱

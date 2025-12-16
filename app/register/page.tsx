@@ -59,7 +59,11 @@ function RegisterPageContent() {
     }
 
     try {
-      const response = await fetch('/api/register', {
+      const apiUrl = '/api/register';
+      console.log('🔵 [REGISTER] 요청 URL:', apiUrl);
+      console.log('🔵 [REGISTER] 요청 데이터:', { email, name, passwordLength: password.length });
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -70,6 +74,8 @@ function RegisterPageContent() {
           name: name || undefined,
         }),
       });
+      
+      console.log('🔵 [REGISTER] 전체 Response URL:', response.url);
 
       // 응답 텍스트 먼저 확인
       const responseText = await response.text();

@@ -17,6 +17,7 @@ import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import KakaoProvider from 'next-auth/providers/kakao';
+import bcrypt from 'bcrypt';
 import { prisma } from './prisma';
 
 /**
@@ -69,14 +70,14 @@ export const authOptions: NextAuthOptions = {
 
   providers: [
     /**
-     * 1) 테스트 계정 Credentials Provider
+     * 이메일/비밀번호 Credentials Provider
      *
-     * - 테스트 계정으로 로그인 가능
-     * - DB 조회/생성 전혀 안 함
-     * - 토스페이먼츠 결제 테스트용
+     * - 데이터베이스에서 사용자 확인
+     * - bcrypt로 비밀번호 검증
+     * - 테스트 계정도 함께 지원 (하위 호환성)
      */
     CredentialsProvider({
-      name: 'Test Account',
+      name: 'Credentials',
       credentials: {
         email: { label: '이메일', type: 'email' },
         password: { label: '비밀번호', type: 'password' },
@@ -94,24 +95,92 @@ export const authOptions: NextAuthOptions = {
         const email = credentials.email.trim().toLowerCase();
         const password = credentials.password;
 
-        // 테스트 계정 확인
-        const testAccount = TEST_ACCOUNTS.find(
-          (account) => account.email === email && account.password === password
-        );
+        try {
+          // 1. 데이터베이스에서 사용자 찾기
+          const dbUser = await prisma.user.findUnique({
+            where: { email },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              password: true,
+            },
+          });
 
-        if (!testAccount) {
-          console.warn('⚠️ [AUTH] 테스트 계정이 아닙니다:', email);
+          if (dbUser && dbUser.password) {
+            // 데이터베이스 사용자: 비밀번호 검증
+            const isValidPassword = await bcrypt.compare(password, dbUser.password);
+            
+            if (isValidPassword) {
+              console.log('✅ [AUTH] 데이터베이스 사용자 로그인 성공:', {
+                id: dbUser.id,
+                email: dbUser.email,
+              });
+              
+              return {
+                id: dbUser.id,
+                email: dbUser.email,
+                name: dbUser.name || undefined,
+              };
+            } else {
+              console.warn('⚠️ [AUTH] 비밀번호가 일치하지 않습니다:', email);
+              return null;
+            }
+          }
+
+          // 2. 데이터베이스에 사용자가 없는 경우, 테스트 계정 확인 (하위 호환성)
+          const testAccount = TEST_ACCOUNTS.find(
+            (account) => account.email === email && account.password === password
+          );
+
+          if (testAccount) {
+            // 테스트 계정인 경우, DB에 사용자가 없으면 자동 생성
+            let userId: string = testAccount.id;
+            
+            try {
+              const existingUser = await prisma.user.findUnique({
+                where: { email: testAccount.email },
+                select: { id: true },
+              });
+
+              if (!existingUser) {
+                // 테스트 계정을 DB에 생성 (비밀번호 해시 저장)
+                const hashedPassword = await bcrypt.hash(testAccount.password, 10);
+                const newUser = await prisma.user.create({
+                  data: {
+                    email: testAccount.email,
+                    name: testAccount.name,
+                    password: hashedPassword,
+                  },
+                });
+                userId = newUser.id;
+                console.log('✅ [AUTH] 테스트 계정을 DB에 생성:', userId);
+              } else {
+                userId = existingUser.id;
+              }
+            } catch (error) {
+              console.error('🔴 [AUTH] 테스트 계정 DB 생성 실패:', error);
+              // DB 생성 실패해도 테스트 계정 ID로 로그인 허용
+            }
+
+            console.log('✅ [AUTH] 테스트 계정 로그인 성공:', {
+              id: userId,
+              email: testAccount.email,
+            });
+
+            return {
+              id: userId,
+              email: testAccount.email,
+              name: testAccount.name,
+            };
+          }
+
+          console.warn('⚠️ [AUTH] 로그인 실패: 사용자를 찾을 수 없습니다:', email);
+          return null;
+        } catch (error) {
+          console.error('🔴 [AUTH] 로그인 오류:', error);
           return null;
         }
-
-        const user = {
-          id: testAccount.id,
-          email: testAccount.email,
-          name: testAccount.name,
-        };
-
-        console.log('✅ [AUTH] 로그인 성공:', user);
-        return user;
       },
     }),
 

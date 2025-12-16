@@ -7,6 +7,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcrypt';
 
+// OPTIONS 핸들러 추가 (CORS preflight)
+export async function OPTIONS() {
+  return NextResponse.json({}, { status: 200 });
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Request body 파싱

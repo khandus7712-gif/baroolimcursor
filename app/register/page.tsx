@@ -76,10 +76,13 @@ function RegisterPageContent() {
       });
       
       console.log('🔵 [REGISTER] 전체 Response URL:', response.url);
+      console.log('🔵 [REGISTER] Response Headers:', Object.fromEntries(response.headers.entries()));
+      console.log('🔵 [REGISTER] x-hit-register-route 헤더:', response.headers.get('x-hit-register-route'));
 
       // 응답 텍스트 먼저 확인
       const responseText = await response.text();
       console.log('🔵 [REGISTER] 응답 상태:', response.status, '응답 본문:', responseText);
+      console.log('🔵 [REGISTER] 응답 본문 첫 200자:', responseText.substring(0, 200));
 
       let data;
       try {

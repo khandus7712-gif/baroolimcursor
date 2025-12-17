@@ -96,10 +96,9 @@ function RegisterPageContent() {
       console.log('✅ 회원가입 성공:', data);
       setSuccess(true);
       
-      // 2초 후 로그인 페이지로 리다이렉트
-      setTimeout(() => {
-        router.push('/login?registered=true');
-      }, 2000);
+      // 로그인 페이지로 즉시 리다이렉트 (replace 사용)
+      router.replace('/login?registered=true');
+      return;
     } catch (err) {
       console.error('🔴 회원가입 오류:', err);
       setError(err instanceof Error ? err.message : '회원가입 중 오류가 발생했습니다.');

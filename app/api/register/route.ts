@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcrypt';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
@@ -15,11 +16,13 @@ export async function OPTIONS(request: NextRequest) {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
+      'x-hit-register-route': 'v2-options',
     },
   });
 }
 
 export async function POST(request: NextRequest) {
+  console.log('🟢 [REGISTER] POST 요청 받음');
   try {
     const body = await request.json();
     const { email, password, name } = body;

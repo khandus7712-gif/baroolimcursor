@@ -1,9 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcrypt';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
+// POST 핸들러
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

@@ -77,7 +77,7 @@ export const authOptions: NextAuthOptions = {
 
   // JWT 암호화에 사용할 시크릿
   // NEXTAUTH_SECRET이 없으면 NextAuth가 에러를 발생시킵니다
-  secret: process.env.NEXTAUTH_SECRET || 'temporary-secret-please-set-nexauth-secret-in-vercel',
+  secret: process.env.NEXTAUTH_SECRET,
 
   providers: [
     /**

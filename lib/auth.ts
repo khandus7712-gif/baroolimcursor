@@ -45,15 +45,25 @@ const TEST_ACCOUNTS = [
   },
 ] as const;
 
-// --- 환경변수 체크 로그 (서버 로그용, 문제되면 지워도 됨) ---
+// --- 환경변수 체크 및 에러 처리 ---
+const hasNextAuthSecret = !!process.env.NEXTAUTH_SECRET;
+const nextAuthUrl = process.env.NEXTAUTH_URL;
+
 console.log('🔍 [auth.ts] ENV CHECK', {
   NODE_ENV: process.env.NODE_ENV,
-  NEXTAUTH_URL: process.env.NEXTAUTH_URL,
-  has_NEXTAUTH_SECRET: !!process.env.NEXTAUTH_SECRET,
+  NEXTAUTH_URL: nextAuthUrl,
+  has_NEXTAUTH_SECRET: hasNextAuthSecret,
   has_DB_URL: !!process.env.DATABASE_URL,
   has_GOOGLE_ID: !!process.env.GOOGLE_CLIENT_ID,
   has_KAKAO_ID: !!process.env.KAKAO_CLIENT_ID,
 });
+
+// NEXTAUTH_SECRET이 없으면 명확한 에러 메시지
+if (!hasNextAuthSecret) {
+  console.error('🔴 [auth.ts] NEXTAUTH_SECRET이 설정되지 않았습니다!');
+  console.error('🔴 Vercel 대시보드 → Settings → Environment Variables에서 NEXTAUTH_SECRET을 추가하세요.');
+  console.error('🔴 생성 방법: openssl rand -base64 32');
+}
 
 export const authOptions: NextAuthOptions = {
   /**
@@ -65,8 +75,9 @@ export const authOptions: NextAuthOptions = {
    */
   adapter: PrismaAdapter(prisma),
 
-  // JWT 암호화에 사용할 시크릿 (Vercel에 이미 설정되어 있음)
-  secret: process.env.NEXTAUTH_SECRET,
+  // JWT 암호화에 사용할 시크릿
+  // NEXTAUTH_SECRET이 없으면 NextAuth가 에러를 발생시킵니다
+  secret: process.env.NEXTAUTH_SECRET || 'temporary-secret-please-set-nexauth-secret-in-vercel',
 
   providers: [
     /**

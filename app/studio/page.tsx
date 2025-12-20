@@ -892,19 +892,63 @@ function StudioPageContent() {
               {/* 에러 상태 */}
               {error && !isGenerating && (
                 <div className="bg-red-50 border-2 border-red-200 rounded-xl p-6">
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-3 mb-4">
                     <AlertCircle className="w-6 h-6 text-red-500 flex-shrink-0 mt-1" />
-                    <div>
+                    <div className="flex-1">
                       <h3 className="font-bold text-red-900 mb-2">오류 발생</h3>
-                      <p className="text-red-700">{error}</p>
-                      <button
-                        onClick={handleGenerate}
-                        className="mt-4 text-sm text-red-600 hover:text-red-800 underline"
-                      >
-                        다시 시도하기
-                      </button>
+                      <p className="text-red-700 whitespace-pre-line">{error}</p>
                     </div>
                   </div>
+                  {error.includes('무료 체험') && (
+                    <div className="mt-4 pt-4 border-t border-red-200">
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center gap-2 text-red-700">
+                          <Check className="w-4 h-4 flex-shrink-0" />
+                          <span className="text-sm">생성 제한 없이 사용</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-red-700">
+                          <Check className="w-4 h-4 flex-shrink-0" />
+                          <span className="text-sm">카드 등록은 결제 시에만 진행돼요</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => router.push('/pricing')}
+                        className="w-full bg-gradient-to-r from-brand-neon-purple to-brand-neon-pink px-6 py-3 rounded-lg font-semibold text-white hover:shadow-lg transition-all"
+                      >
+                        유료 플랜으로 계속하기
+                      </button>
+                    </div>
+                  )}
+                  {error.includes('생성 한도를 모두 사용') && (
+                    <div className="mt-4 pt-4 border-t border-red-200">
+                      <div className="mb-4 p-3 bg-gray-100 rounded-lg">
+                        <p className="text-red-700 text-sm mb-1">더 필요하신가요?</p>
+                        <p className="text-red-700 text-sm">→ 상위 플랜으로 업그레이드하면 즉시 더 사용할 수 있어요.</p>
+                      </div>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => router.push('/mypage')}
+                          className="flex-1 px-4 py-2 border-2 border-red-300 text-red-700 rounded-lg font-semibold hover:bg-red-50 transition-all"
+                        >
+                          다음 달까지 기다리기
+                        </button>
+                        <button
+                          onClick={() => router.push('/pricing')}
+                          className="flex-1 bg-gradient-to-r from-brand-neon-purple to-brand-neon-pink px-4 py-2 rounded-lg font-semibold text-white hover:shadow-lg transition-all"
+                        >
+                          플랜 업그레이드
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {!error.includes('무료 체험') && !error.includes('생성 한도를 모두 사용') && (
+                    <button
+                      onClick={handleGenerate}
+                      className="mt-4 text-sm text-red-600 hover:text-red-800 underline"
+                    >
+                      다시 시도하기
+                    </button>
+                  )}
                 </div>
               )}
 

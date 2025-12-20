@@ -165,7 +165,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const limitCheck = await checkGenerationLimit(userId);
     if (!limitCheck.canGenerate) {
       return res.status(403).json({ 
-        error: limitCheck.error || '생성 횟수를 초과했습니다.',
+        error: limitCheck.error || '이번 플랜의 생성 한도를 모두 사용하셨어요. 요금제를 확인해주세요.',
         remaining: limitCheck.remaining || 0,
       });
     }

@@ -40,11 +40,11 @@ interface PlanInfo {
 const PLANS: PlanInfo[] = [
   {
     id: 'FREE',
-    name: 'Free',
+    name: '무료 플랜',
     price: 0,
     monthlyLimit: null,
     totalLimit: 5,
-    features: ['평생 5회 무료', '4개 플랫폼 지원', '기본 AI 기능', '카드 등록 없이 사용']
+    features: ['평생 5회 무료', '모든 플랫폼 지원', '기본 AI 기능', '커뮤니티 지원']
   },
   {
     id: 'BASIC',
@@ -52,7 +52,7 @@ const PLANS: PlanInfo[] = [
     price: 49900,
     monthlyLimit: 150,
     totalLimit: null,
-    features: ['월 150개 생성', '인스타/블로그/스레드/GBP 전체 지원', '업종 7개 전체 제공', '모든 플러그인', '예약 저장 + 알림', '7일 100% 환불']
+    features: ['월 150개 생성', '모든 플랫폼 지원', '고급 AI 기능', '이메일 지원', '예약 발행']
   },
   {
     id: 'PRO',
@@ -60,7 +60,15 @@ const PLANS: PlanInfo[] = [
     price: 79000,
     monthlyLimit: 400,
     totalLimit: null,
-    features: ['월 400개 생성', '다점포 운영 최적화', '브랜드 톤 설정', '우선 지원', '모든 플랫폼 지원', '모든 플러그인', '향후 팀 계정 기능 예정']
+    features: ['월 400개 생성', '모든 플랫폼 지원', '프리미엄 AI', '우선 지원', '예약 발행', '분석 리포트']
+  },
+  {
+    id: 'ENTERPRISE',
+    name: '엔터프라이즈',
+    price: 0,
+    monthlyLimit: null,
+    totalLimit: null,
+    features: ['무제한 생성', '무제한 플랫폼', '커스텀 AI', '전담 매니저', '예약 발행', '고급 분석', 'API 제공']
   },
 ];
 
@@ -110,24 +118,17 @@ export default function MyPage() {
     ? currentPlan.totalLimit - profile.totalGenerations 
     : null;
   
-  // 월간 잔여 횟수 계산
-  let monthlyRemaining: number | null = null;
-  if (currentPlan?.monthlyLimit) {
-    const now = new Date();
-    const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    currentMonth.setHours(0, 0, 0, 0);
-    
-    let monthlyCount = profile.monthlyGenerationCount;
-    if (profile.lastGenerationMonth) {
-      const lastMonth = new Date(profile.lastGenerationMonth);
-      lastMonth.setHours(0, 0, 0, 0);
-      if (lastMonth.getTime() !== currentMonth.getTime()) {
-        monthlyCount = 0; // 월이 바뀌었으면 0으로 표시
-      }
-    }
-    
-    monthlyRemaining = currentPlan.monthlyLimit - monthlyCount;
-  }
+  // 월간 제한 계산 (월이 바뀌었는지 확인)
+  const now = new Date();
+  const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastGenMonth = profile.lastGenerationMonth ? new Date(profile.lastGenerationMonth) : null;
+  const isNewMonth = !lastGenMonth || 
+    lastGenMonth.getFullYear() !== currentMonth.getFullYear() || 
+    lastGenMonth.getMonth() !== currentMonth.getMonth();
+  
+  const monthlyRemaining = currentPlan?.monthlyLimit && !isNewMonth
+    ? currentPlan.monthlyLimit - profile.monthlyGenerationCount 
+    : currentPlan?.monthlyLimit || null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-900 py-8 px-6">
@@ -236,12 +237,27 @@ export default function MyPage() {
                   ></div>
                 </div>
                 {remainingGenerations !== null && remainingGenerations <= 1 && (
-                  <div className="mt-3 p-4 bg-red-500/20 border border-red-500/50 rounded-xl text-red-200 text-sm flex items-start gap-2">
-                    <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <div className="font-semibold mb-1">무료 횟수가 거의 소진되었습니다</div>
-                      <div className="text-red-200/80">유료 플랜으로 업그레이드하고 무제한으로 사용하세요!</div>
+                  <div className="mt-3 p-4 bg-red-500/20 border border-red-500/50 rounded-xl text-red-200 text-sm">
+                    <div className="flex items-start gap-2 mb-3">
+                      <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                      <div className="font-semibold">무료 횟수가 거의 소진되었습니다</div>
                     </div>
+                    <div className="ml-7 space-y-1 mb-3">
+                      <div className="flex items-center gap-2 text-red-200/90">
+                        <Check className="w-4 h-4 flex-shrink-0" />
+                        <span>생성 제한 없이 사용</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-red-200/90">
+                        <Check className="w-4 h-4 flex-shrink-0" />
+                        <span>카드 등록은 결제 시에만 진행돼요</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => router.push('/pricing')}
+                      className="ml-7 w-auto bg-gradient-to-r from-brand-neon-purple to-brand-neon-pink px-6 py-2 rounded-lg font-semibold text-white hover:shadow-lg transition-all"
+                    >
+                      유료 플랜으로 계속하기
+                    </button>
                   </div>
                 )}
               </div>
@@ -256,18 +272,44 @@ export default function MyPage() {
                 </div>
                 <div className="h-3 bg-white/10 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-gradient-to-r from-brand-neon-purple to-brand-neon-pink transition-all"
+                    className={`h-full transition-all ${
+                      monthlyRemaining !== null && monthlyRemaining <= 0
+                        ? 'bg-red-500'
+                        : 'bg-gradient-to-r from-brand-neon-purple to-brand-neon-pink'
+                    }`}
                     style={{ 
                       width: `${monthlyRemaining !== null && currentPlan?.monthlyLimit 
-                        ? (monthlyRemaining / currentPlan.monthlyLimit) * 100 
+                        ? Math.max(0, (monthlyRemaining / currentPlan.monthlyLimit) * 100)
                         : 0}%` 
                     }}
                   ></div>
                 </div>
                 <div className="mt-3 text-white/60 text-sm flex items-center gap-2">
                   <Clock className="w-4 h-4" />
-                  매월 1일에 초기화됩니다
+                  다음 달 1일에 자동으로 충전됩니다
                 </div>
+                {monthlyRemaining !== null && monthlyRemaining <= 0 && (
+                  <div className="mt-4 p-4 bg-yellow-500/20 border border-yellow-500/50 rounded-xl">
+                    <div className="mb-3">
+                      <p className="text-yellow-200 text-sm mb-1">더 필요하신가요?</p>
+                      <p className="text-yellow-200/80 text-sm">→ 상위 플랜으로 업그레이드하면 즉시 더 사용할 수 있어요.</p>
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => router.push('/mypage')}
+                        className="flex-1 px-4 py-2 border-2 border-yellow-300 text-yellow-200 rounded-lg font-semibold hover:bg-yellow-500/20 transition-all"
+                      >
+                        다음 달까지 기다리기
+                      </button>
+                      <button
+                        onClick={() => router.push('/pricing')}
+                        className="flex-1 bg-gradient-to-r from-brand-neon-purple to-brand-neon-pink px-4 py-2 rounded-lg font-semibold text-white hover:shadow-lg transition-all"
+                      >
+                        플랜 업그레이드
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -290,7 +332,7 @@ export default function MyPage() {
               className="w-full mt-6 bg-gradient-to-r from-brand-neon-purple to-brand-neon-pink px-6 py-4 rounded-xl font-bold text-white hover:shadow-lg hover:shadow-brand-neon-purple/50 transition-all flex items-center justify-center gap-2"
             >
               <Star className="w-5 h-5" />
-              유료 플랜으로 업그레이드
+              유료 플랜으로 계속하기
               <ArrowRight className="w-5 h-5" />
             </button>
           )}
@@ -353,11 +395,7 @@ export default function MyPage() {
             onClick={() => router.push('/studio')}
             className="bg-white/10 hover:bg-white/20 backdrop-blur-xl rounded-2xl border border-white/20 p-6 text-left transition-all group"
           >
-            <img 
-              src="/logo.svg" 
-              alt="바로올림" 
-              className="w-8 h-8 mb-3 group-hover:scale-110 transition-transform drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]"
-            />
+            <Sparkles className="w-8 h-8 text-brand-neon-purple mb-3 group-hover:scale-110 transition-transform" />
             <div className="text-lg font-bold text-white mb-1">콘텐츠 생성</div>
             <div className="text-white/60 text-sm">새로운 콘텐츠 만들기</div>
           </button>

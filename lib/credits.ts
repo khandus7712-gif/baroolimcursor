@@ -65,7 +65,7 @@ export async function checkGenerationLimit(userId: string): Promise<{
     if (user.totalGenerations >= totalLimit) {
       return {
         canGenerate: false,
-        error: `평생 생성 횟수(${totalLimit}회)를 모두 사용하셨습니다. 유료 플랜으로 업그레이드하세요.`,
+        error: `무료 체험 5회를 모두 사용하셨어요 🎉\n\n마음에 드셨다면, 유료 플랜으로 계속 사용해보세요.\n\n• 생성 제한 없이 사용\n• 카드 등록은 결제 시에만 진행돼요`,
         remaining: 0,
       };
     }
@@ -107,7 +107,7 @@ export async function checkGenerationLimit(userId: string): Promise<{
   if (user.monthlyGenerationCount >= monthlyLimit) {
     return {
       canGenerate: false,
-      error: `이번 달 생성 횟수(${monthlyLimit}회)를 모두 사용하셨습니다. 다음 달에 다시 사용하실 수 있습니다.`,
+      error: `이번 달 생성 한도를 모두 사용하셨어요 🎉\n다음 달에 다시 ${monthlyLimit}회가 자동으로 충전됩니다.`,
       remaining: 0,
     };
   }

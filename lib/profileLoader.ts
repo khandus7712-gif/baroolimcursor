@@ -20,13 +20,18 @@ import gmbTemplate from '@/profiles/platforms/gmb.json';
 /**
  * 구독 플랜 타입
  */
-export type SubscriptionPlan = 'FREE' | 'BASIC' | 'PRO' | 'ENTERPRISE';
+export type SubscriptionPlan = 'FREE' | 'LITE' | 'BASIC' | 'PRO' | 'ENTERPRISE';
 
 /**
  * 플랜별 접근 가능한 도메인 정의
  */
 export const PLAN_DOMAINS: Record<SubscriptionPlan, string[]> = {
   FREE: ['food', 'beauty', 'retail'],
+  LITE: [
+    'food', 'beauty', 'retail',
+    'cafe', 'fitness', 'pet',
+    'education'
+  ], // 기능 제한 없음 - 모든 업종 접근 가능
   BASIC: [
     'food', 'beauty', 'retail',
     'cafe', 'fitness', 'pet',
@@ -52,6 +57,7 @@ export const PLAN_DOMAINS: Record<SubscriptionPlan, string[]> = {
  */
 export function getDomainRequiredPlan(domainId: string): SubscriptionPlan {
   if (PLAN_DOMAINS.FREE.includes(domainId)) return 'FREE';
+  if (PLAN_DOMAINS.LITE.includes(domainId)) return 'LITE';
   if (PLAN_DOMAINS.BASIC.includes(domainId)) return 'BASIC';
   if (PLAN_DOMAINS.PRO.includes(domainId)) return 'PRO';
   return 'PRO'; // 기본값

@@ -13,6 +13,7 @@ datasource db {
 // 구독 플랜 타입
 enum SubscriptionPlan {
   FREE        // 평생 5회
+  LITE        // 9,900원 - 월 30개 (체험 유료)
   BASIC       // 49,900원 - 월 150개 (Starter)
   PRO         // 79,000원 - 월 400개 (Growth)
   ENTERPRISE  // (사용 안 함)

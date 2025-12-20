@@ -5,7 +5,7 @@
 /**
  * 구독 플랜 타입
  */
-export type SubscriptionPlan = 'free' | 'basic' | 'pro' | 'enterprise';
+export type SubscriptionPlan = 'free' | 'lite' | 'basic' | 'pro' | 'enterprise';
 
 /**
  * 구독 상태

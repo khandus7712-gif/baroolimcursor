@@ -10,6 +10,7 @@ import { prisma } from '@/lib/prisma';
  */
 const PLAN_MONTHLY_LIMITS: Record<string, number> = {
   FREE: 0, // FREE는 월간 제한 없음 (평생 5회만)
+  LITE: 30, // Lite: 월 30개
   BASIC: 150, // Starter: 월 150개
   PRO: 400, // Growth: 월 400개
   ENTERPRISE: 0, // 사용 안 함
@@ -20,6 +21,7 @@ const PLAN_MONTHLY_LIMITS: Record<string, number> = {
  */
 const PLAN_TOTAL_LIMITS: Record<string, number> = {
   FREE: 5,
+  LITE: 0, // 무제한
   BASIC: 0, // 무제한
   PRO: 0, // 무제한
   ENTERPRISE: 0, // 무제한

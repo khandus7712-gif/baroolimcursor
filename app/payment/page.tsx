@@ -8,7 +8,7 @@
 import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Check, CreditCard, Shield, Zap, Star } from 'lucide-react';
+import { Sparkles, Check, CreditCard, Shield, Zap, Star } from 'lucide-react';
 import { loadTossPayments } from '@tosspayments/payment-sdk';
 
 interface Plan {
@@ -16,7 +16,7 @@ interface Plan {
   name: string;
   price: number;
   billingType: 'monthly' | 'single';
-  monthlyLimit: number | null;
+  dailyLimit: number | null;
   features: string[];
   popular?: boolean;
 }
@@ -27,48 +27,41 @@ const PLANS: Plan[] = [
     name: '단건 콘텐츠',
     price: 990,
     billingType: 'single',
-    monthlyLimit: null,
-    features: [
-      '콘텐츠 1개 생성 (블로그 포함 1차감)',
-      '업종 7개 / 플랫폼 4개 모두 사용',
-      '플러그인 포함',
-      '결제 후 즉시 생성 가능',
-      '구매 후 90일 내 사용',
-    ],
+    dailyLimit: null,
+    features: ['원하는 콘텐츠 한 건만 즉시 구매', '결제 후 바로 콘텐츠 생성 가능', '필요할 때마다 유연하게 이용'],
+  },
+  {
+    id: 'LITE',
+    name: 'Lite',
+    price: 9900,
+    billingType: 'monthly',
+    dailyLimit: null,
+    features: ['월 30개 생성', '모든 플랫폼 지원', '모든 기능 사용', '예약 발행', '기능 제한 없음'],
   },
   {
     id: 'BASIC',
-    name: 'Starter',
-    price: 49900,
+    name: '베이직',
+    price: 29900,
     billingType: 'monthly',
-    monthlyLimit: 150,
-    features: [
-      '월 150개 생성',
-      '인스타 / 블로그 / 스레드 / GBP 전체 지원',
-      '업종 7개 전체 제공',
-      '예약·광고·해시태그·리뷰 자동 생성 플러그인',
-      '예약 저장 + 알림',
-      '7일 100% 환불',
-    ],
-    popular: true,
+    dailyLimit: 3,
+    features: ['하루 3개 생성', '모든 플랫폼 지원', '고급 AI 기능', '이메일 지원', '예약 발행'],
   },
   {
     id: 'PRO',
-    name: 'Growth',
-    price: 79000,
+    name: '프로',
+    price: 49900,
     billingType: 'monthly',
-    monthlyLimit: 400,
-    features: [
-      '월 400개 생성',
-      '다점포 운영 최적화',
-      '브랜드 톤 설정',
-      '우선 지원',
-      '인스타 / 블로그 / 스레드 / GBP 전체 지원',
-      '업종 7개 전체 제공',
-      '모든 플러그인 포함',
-      '예약 저장 + 알림',
-      '향후 팀 계정 기능 예정',
-    ],
+    dailyLimit: 10,
+    features: ['하루 10개 생성', '모든 플랫폼 지원', '프리미엄 AI', '우선 지원', '예약 발행', '분석 리포트'],
+    popular: true,
+  },
+  {
+    id: 'ENTERPRISE',
+    name: '엔터프라이즈',
+    price: 79900,
+    billingType: 'monthly',
+    dailyLimit: 30,
+    features: ['하루 30개 생성', '무제한 플랫폼', '커스텀 AI', '전담 매니저', '예약 발행', '고급 분석', 'API 제공'],
   },
 ];
 
@@ -79,13 +72,6 @@ function PaymentContent() {
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [discountInfo, setDiscountInfo] = useState<{
-    originalAmount: number;
-    discountAmount: number;
-    finalAmount: number;
-    discountRate: number;
-    isDiscountApplied: boolean;
-  } | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -99,51 +85,9 @@ function PaymentContent() {
       const plan = PLANS.find(p => p.id === planId);
       if (plan) {
         setSelectedPlan(plan);
-        // 할인 정보 확인
-        if (session?.user?.email) {
-          checkDiscount(plan.id, plan.price);
-        }
       }
     }
-  }, [searchParams, session]);
-
-  // 플랜이 변경되면 할인 정보 다시 확인
-  useEffect(() => {
-    if (selectedPlan && session?.user?.email) {
-      checkDiscount(selectedPlan.id, selectedPlan.price);
-    } else {
-      setDiscountInfo(null);
-    }
-  }, [selectedPlan, session]);
-
-  const checkDiscount = async (planId: string, price: number) => {
-    if (!session?.user?.email) return;
-
-    try {
-      const response = await fetch('/api/payment/discount', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          planId,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setDiscountInfo({
-          originalAmount: data.originalAmount || price,
-          discountAmount: data.discountAmount || 0,
-          finalAmount: data.finalAmount || price,
-          discountRate: data.discountRate || 0,
-          isDiscountApplied: data.isDiscountApplied || false,
-        });
-      }
-    } catch (err) {
-      console.error('Discount check error:', err);
-    }
-  };
+  }, [searchParams]);
 
   const handlePayment = async () => {
     if (!selectedPlan || !session) return;
@@ -160,7 +104,7 @@ function PaymentContent() {
         },
         body: JSON.stringify({
           planId: selectedPlan.id,
-          amount: discountInfo?.isDiscountApplied ? discountInfo.finalAmount : selectedPlan.price,
+          amount: selectedPlan.price,
         }),
       });
 
@@ -169,19 +113,7 @@ function PaymentContent() {
         throw new Error(data.error || '결제 준비에 실패했습니다.');
       }
 
-      const checkoutData = await response.json();
-      const { orderId, orderName, amount } = checkoutData;
-      
-      // 할인 정보 업데이트
-      if (checkoutData.originalAmount) {
-        setDiscountInfo({
-          originalAmount: checkoutData.originalAmount,
-          discountAmount: checkoutData.discountAmount || 0,
-          finalAmount: amount,
-          discountRate: checkoutData.discountRate || 0,
-          isDiscountApplied: checkoutData.isDiscountApplied || false,
-        });
-      }
+      const { orderId, orderName, amount } = await response.json();
 
       // 2. 토스페이먼츠 SDK 로드
       const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
@@ -211,12 +143,9 @@ function PaymentContent() {
 
   const priceLabel =
     selectedPlan?.billingType === 'monthly' ? '월 결제 금액' : '단건 결제 금액';
-  
-  const displayPrice = discountInfo?.isDiscountApplied 
-    ? discountInfo.finalAmount 
-    : selectedPlan?.price || 0;
-  
-  const priceValue = `₩${displayPrice.toLocaleString()}`;
+  const priceValue = selectedPlan
+    ? `₩${selectedPlan.price.toLocaleString()}`
+    : '';
 
   if (status === 'loading') {
     return (
@@ -236,11 +165,7 @@ function PaymentContent() {
         {/* 헤더 */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <img 
-              src="/logo.svg" 
-              alt="바로올림" 
-              className="w-12 h-12 drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]"
-            />
+            <Sparkles className="w-12 h-12 text-brand-neon-purple" />
             <h1 className="text-4xl font-black text-white">결제하기</h1>
           </div>
           <p className="text-white/70 text-lg">
@@ -344,25 +269,6 @@ function PaymentContent() {
                   ))}
                 </div>
 
-                {discountInfo?.isDiscountApplied && (
-                  <div className="mb-4 p-4 bg-green-500/20 border border-green-500/50 rounded-xl">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-green-200 text-sm font-semibold">사전예약 할인 적용</span>
-                      <span className="text-green-200 text-sm font-bold">30% 할인</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-white/60 text-sm line-through">
-                        ₩{discountInfo.originalAmount.toLocaleString()}
-                      </span>
-                      <span className="text-white text-lg font-bold">
-                        ₩{discountInfo.finalAmount.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="text-green-200/80 text-xs mt-2">
-                      할인 금액: ₩{discountInfo.discountAmount.toLocaleString()}
-                    </div>
-                  </div>
-                )}
                 <div className="flex items-center justify-between pt-4 border-t border-white/10">
                   <span className="text-white text-lg font-semibold">{priceLabel}</span>
                   <span className="text-3xl font-black text-brand-neon-purple">
@@ -394,17 +300,10 @@ function PaymentContent() {
                   <Check className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <span>언제든지 마이페이지에서 해지 가능합니다</span>
                 </div>
-                {discountInfo?.isDiscountApplied ? (
-                  <div className="flex items-start gap-2">
-                    <Check className="w-4 h-4 flex-shrink-0 mt-0.5 text-green-400" />
-                    <span className="text-green-200">사전예약 할인 30%가 적용됩니다 (2026년 1월까지)</span>
-                  </div>
-                ) : (
-                  <div className="flex items-start gap-2">
-                    <Check className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                    <span>사전예약 시 30% 할인 혜택을 받을 수 있습니다</span>
-                  </div>
-                )}
+                <div className="flex items-start gap-2">
+                  <Check className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>첫 달은 사전예약 할인이 적용됩니다</span>
+                </div>
               </div>
 
               <button
@@ -414,7 +313,7 @@ function PaymentContent() {
               >
                 <CreditCard className="w-6 h-6" />
                 {loading ? '결제 준비 중...' : '결제하기'}
-                {!loading && <span>₩{displayPrice.toLocaleString()}</span>}
+                {!loading && <span>₩{selectedPlan.price.toLocaleString()}</span>}
               </button>
             </div>
 

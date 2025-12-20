@@ -13,6 +13,7 @@ const PLANS: Record<
   { name: string; price: number; plan?: string; pass?: { uses: number; expiryDays?: number } }
 > = {
   SINGLE_CONTENT: { name: '단건 콘텐츠', price: 990, pass: { uses: 1, expiryDays: 90 } },
+  LITE: { name: 'Lite', price: 9900, plan: 'LITE' },
   BASIC: { name: 'Starter', price: 49900, plan: 'BASIC' },
   PRO: { name: 'Growth', price: 79000, plan: 'PRO' },
 };

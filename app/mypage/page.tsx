@@ -47,6 +47,14 @@ const PLANS: PlanInfo[] = [
     features: ['평생 5회 무료', '모든 플랫폼 지원', '기본 AI 기능', '커뮤니티 지원']
   },
   {
+    id: 'LITE',
+    name: 'Lite',
+    price: 9900,
+    monthlyLimit: 30,
+    totalLimit: null,
+    features: ['월 30개 생성', '모든 플랫폼 지원', '모든 기능 사용', '예약 발행', '기능 제한 없음']
+  },
+  {
     id: 'BASIC',
     name: 'Starter',
     price: 49900,

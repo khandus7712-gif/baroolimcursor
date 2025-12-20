@@ -40,8 +40,9 @@ PowerShell에서:
 ## 3. Google OAuth (Google 로그인용)
 
 ```env
-GOOGLE_CLIENT_ID="123456789-abcdefg.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET="GOCSPX-..."
+GOOGLE_CLIENT_ID="YOUR_CLIENT_ID"
+GOOGLE_CLIENT_SECRET="YOUR_SECRET"
+
 ```
 
 **발급 방법:**
@@ -205,19 +206,6 @@ npm run dev
 - 환경 변수 설정: `ENV_SETUP.md`
 - Google OAuth 문제 해결: `GOOGLE_OAUTH_FIX.md`
 - Kakao 로그인 문제 해결: `KAKAO_LOGIN_TROUBLESHOOTING.md`
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

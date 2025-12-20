@@ -59,7 +59,7 @@ function RegisterPageContent() {
     }
 
     try {
-      const apiUrl = '/api/register';
+      const apiUrl = '/api/public/register';
       console.log('🔵 [REGISTER] 요청 URL:', apiUrl);
       console.log('🔵 [REGISTER] 요청 데이터:', { email, name, passwordLength: password.length });
       

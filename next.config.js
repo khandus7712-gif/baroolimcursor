@@ -10,17 +10,6 @@ const nextConfig = {
     ],
   },
 
-  async redirects() {
-    return [
-      {
-        source: '/:path*',
-        has: [{ type: 'host', value: 'www.baroolim.com' }],
-        destination: 'https://baroolim.com/:path*',
-        permanent: true,
-      },
-    ]
-  },
-
   experimental: {
     serverActions: {
       bodySizeLimit: '10mb',

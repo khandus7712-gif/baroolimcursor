@@ -261,3 +261,7 @@ $env:DATABASE_URL="여기에_Vercel에서_복사한_DATABASE_URL_붙여넣기"; 
 
 
 
+
+
+
+

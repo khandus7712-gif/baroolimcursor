@@ -9,20 +9,31 @@ const nextConfig = {
       },
     ],
   },
+
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.baroolim.com' }],
+        destination: 'https://baroolim.com/:path*',
+        permanent: true,
+      },
+    ]
+  },
+
   experimental: {
     serverActions: {
       bodySizeLimit: '10mb',
     },
   },
-  // ESLint를 빌드 시 경고만 표시 (배포 차단 방지)
+
   eslint: {
-    ignoreDuringBuilds: false, // 경고는 표시하되 빌드는 계속
+    ignoreDuringBuilds: false,
   },
-  // TypeScript 에러만 체크 (ESLint 에러로 빌드 차단 방지)
+
   typescript: {
     ignoreBuildErrors: false,
   },
-};
+}
 
-module.exports = nextConfig;
-
+module.exports = nextConfig

@@ -168,18 +168,20 @@ export default function PricingPage() {
         </div>
 
         {/* 요금제 카드 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-          {plans.map((plan) => {
-            const Icon = plan.icon;
-            return (
-              <div
-                key={plan.id}
-                className={`relative bg-white/5 backdrop-blur-xl rounded-3xl border ${
-                  plan.popular ? 'border-brand-neon-purple scale-105 shadow-lg shadow-brand-neon-purple/20' :
-                  plan.isFree ? 'border-gray-700' :
-                  plan.badge ? 'border-white/30' : 'border-white/10'
-                } overflow-hidden transition-all hover:scale-105 hover:border-white/50`}
-              >
+        <div className="space-y-6 mb-16">
+          {/* 첫 번째 줄: Free, 단건 구매, Lite */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {plans.slice(0, 3).map((plan) => {
+              const Icon = plan.icon;
+              return (
+                <div
+                  key={plan.id}
+                  className={`relative bg-white/5 backdrop-blur-xl rounded-3xl border ${
+                    plan.popular ? 'border-brand-neon-purple scale-105 shadow-lg shadow-brand-neon-purple/20' :
+                    plan.isFree ? 'border-gray-700' :
+                    plan.badge ? 'border-white/30' : 'border-white/10'
+                  } overflow-hidden transition-all hover:scale-105 hover:border-white/50`}
+                >
                 {/* 배지 */}
                 {plan.badge && (
                   <div className="absolute top-4 right-4 z-10">
@@ -241,6 +243,8 @@ export default function PricingPage() {
                         router.push('/studio');
                       } else if (plan.id === 'single') {
                         router.push('/payment?plan=SINGLE_CONTENT');
+                      } else if (plan.id === 'lite') {
+                        router.push('/payment?plan=LITE');
                       } else {
                         router.push(`/payment?plan=${plan.id.toUpperCase()}`);
                       }
@@ -258,7 +262,103 @@ export default function PricingPage() {
                 </div>
               </div>
             );
-          })}
+            })}
+          </div>
+
+          {/* 두 번째 줄: Starter (강조), Growth */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {plans.slice(3).map((plan) => {
+              const Icon = plan.icon;
+              return (
+                <div
+                  key={plan.id}
+                  className={`relative bg-white/5 backdrop-blur-xl rounded-3xl border ${
+                    plan.popular ? 'border-brand-neon-purple scale-105 shadow-lg shadow-brand-neon-purple/20 lg:col-span-1' :
+                    plan.badge ? 'border-white/30' : 'border-white/10'
+                  } overflow-hidden transition-all hover:scale-105 hover:border-white/50`}
+                >
+                  {/* 배지 */}
+                  {plan.badge && (
+                    <div className="absolute top-4 right-4 z-10">
+                      <span className={`${plan.badgeColor} text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg`}>
+                        {plan.badge}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* 헤더 */}
+                  <div className={`bg-gradient-to-br ${plan.gradient} p-8`}>
+                    <Icon className="w-12 h-12 mb-4" />
+                    <h3 className="text-2xl font-black mb-2">{plan.name}</h3>
+                    <p className="text-white/80 text-sm mb-4">{plan.description}</p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-4xl font-black">{plan.price}</span>
+                      {plan.period && (
+                        <span className="text-white/70">/ {plan.period}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 기능 목록 */}
+                  <div className="p-8 space-y-4">
+                    {plan.features.map((feature, idx) => (
+                      <div key={idx} className="flex items-start gap-3 group">
+                        {feature.included ? (
+                          <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <X className="w-5 h-5 text-gray-600 flex-shrink-0 mt-0.5" />
+                        )}
+                        <span className={`${feature.included ? 'text-white/90' : 'text-white/40'} ${(feature as any).highlight ? 'text-xl font-bold' : ''}`}>
+                          {feature.text}
+                        </span>
+                        {(feature as any).tooltip && (
+                          <div className="relative flex items-center">
+                            <span className="text-white/50 text-xs cursor-help">?</span>
+                            <div className="absolute left-full ml-2 p-2 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 w-48 z-20">
+                              {(feature as any).tooltip}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* 가치 문구 */}
+                  {plan.valueText && (
+                    <div className="px-8 pb-4">
+                      <p className="text-white/60 text-sm italic">"{plan.valueText}"</p>
+                    </div>
+                  )}
+
+                  {/* 버튼 */}
+                  <div className="p-8 pt-0">
+                    <button
+                      onClick={() => {
+                        if (plan.id === 'free') {
+                          router.push('/studio');
+                        } else if (plan.id === 'single') {
+                          router.push('/payment?plan=SINGLE_CONTENT');
+                        } else if (plan.id === 'lite') {
+                          router.push('/payment?plan=LITE');
+                        } else {
+                          router.push(`/payment?plan=${plan.id.toUpperCase()}`);
+                        }
+                      }}
+                      className={`w-full py-4 rounded-xl font-bold transition-all ${
+                        plan.popular || plan.badge
+                          ? `bg-gradient-to-r ${plan.gradient} hover:scale-105 shadow-lg text-white`
+                          : plan.isFree
+                          ? 'bg-white/10 hover:bg-white/20 text-white'
+                          : 'bg-white/10 hover:bg-white/20 text-white'
+                      }`}
+                    >
+                      {plan.buttonText}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* FAQ 섹션 */}

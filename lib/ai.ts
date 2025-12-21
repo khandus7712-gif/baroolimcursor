@@ -23,7 +23,8 @@ export async function generateContent(
   imageBase64?: string
 ): Promise<string> {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    // Try gemini-1.5-flash-001 or fallback to gemini-pro
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-001' });
 
     if (imageBase64) {
       // 멀티모달 (이미지 + 텍스트)

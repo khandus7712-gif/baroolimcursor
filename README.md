@@ -78,6 +78,9 @@ npm install
 # Google AI API (필수)
 GOOGLE_API_KEY=your-google-ai-api-key-here
 
+# OpenAI API (선택사항 - Gemini 실패 시 fallback용)
+OPENAI_API_KEY=your-openai-api-key-here
+
 # Tavily API (선택사항 - 웹 검색 기능용)
 # https://tavily.com 에서 무료 API 키 발급 가능
 TAVILY_API_KEY=your-tavily-api-key-here

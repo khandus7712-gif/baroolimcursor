@@ -17,7 +17,7 @@ import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import KakaoProvider from 'next-auth/providers/kakao';
-import bcrypt from 'bcrypt';
+import bcryptjs from 'bcryptjs';
 import { prisma } from './prisma';
 
 /**
@@ -120,7 +120,7 @@ export const authOptions: NextAuthOptions = {
 
           if (dbUser && dbUser.password) {
             // 데이터베이스 사용자: 비밀번호 검증
-            const isValidPassword = await bcrypt.compare(password, dbUser.password);
+            const isValidPassword = await bcryptjs.compare(password, dbUser.password);
             
             if (isValidPassword) {
               console.log('✅ [AUTH] 데이터베이스 사용자 로그인 성공:', {
@@ -154,9 +154,9 @@ export const authOptions: NextAuthOptions = {
                 select: { id: true },
               });
 
-              if (!existingUser) {
+                if (!existingUser) {
                 // 테스트 계정을 DB에 생성 (비밀번호 해시 저장)
-                const hashedPassword = await bcrypt.hash(testAccount.password, 10);
+                const hashedPassword = await bcryptjs.hash(testAccount.password, 10);
                 const newUser = await prisma.user.create({
                   data: {
                     email: testAccount.email,

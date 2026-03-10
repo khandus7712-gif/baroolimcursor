@@ -43,6 +43,72 @@ const PLUGINS = [
   { id: 'bookingCta', name: '예약 CTA', desc: '예약 유도 문구' },
   { id: 'hashtag', name: '해시태그', desc: '관련 해시태그 생성' },
 ];
+
+// 업종별 메모 입력 플레이스홀더
+const MEMO_PLACEHOLDERS: Record<string, string> = {
+  food: '예: 대표메뉴명+가격(아롱사태전골 2인 35,000원), 분위기(가족/직장인/데이트), 음식 특징(국물이 진해요, 재료가 신선해요)',
+  beauty: '예: 시술명+가격, 타겟(20대여성/중년), 특징(부작용없어요, 당일예약가능)',
+  retail: '예: 상품명+가격, 타겟고객, 특징(한정수량, 무료배송)',
+  cafe: '예: 시그니처메뉴+가격, 분위기(공부카페/데이트), 특징(직접로스팅, 수제케이크)',
+  fitness: '예: 프로그램명+가격, 타겟(초보자/다이어트), 특징(1:1관리, 주차가능)',
+  pet: '예: 서비스명+가격, 대상(소형견/고양이), 특징(노즈워크, 픽업가능)',
+  education: '예: 과목+수업방식, 타겟(초등/성인), 특징(소수정예, 첫달무료)',
+};
+
+// 업종별 잘 쓴 메모 예시 (2개씩)
+const MEMO_EXAMPLES: Record<string, [string, string]> = {
+  food: [
+    '아롱사태전골 2인 35,000원. 가족/데이트 분위기. 24시간 푹 고은 국물, 신선한 야채 듬뿍. 점심특선 12,000원.',
+    '수제 돈까스 9,000원. 직장인 점심 인기. 바삭한 튀김옷, 두툼한 고기. 콜라 무료리필.',
+  ],
+  beauty: [
+    '젤네일 풀세트 55,000원. 20~30대 여성 타겟. 저자극 젤, 당일 예약 가능. 네일아트 추가 5,000원.',
+    '클리닉 페이셜 80,000원. 중년 여성 추천. 피부과 전문의 상담, 부작용 없음. 첫 방문 20% 할인.',
+  ],
+  retail: [
+    '가을 니트 39,000원. 20~40대 여성. 한정 수량 50벌. 2만원 이상 무료배송. 오늘 주문 시 내일 도착.',
+    '수입 화장품 세트 59,000원. 피부 고민 있는 분. 무료 샘플 증정. 리뷰 작성 시 5,000원 할인.',
+  ],
+  cafe: [
+    '시그니처 아메리카노 5,500원. 공부하기 좋은 조용한 분위기. 직접 로스팅 원두. 콘센트 완비.',
+    '수제 티라미수 7,000원. 데이트/모임 추천. 매일 아침 직접 제작. 단체 예약 가능.',
+  ],
+  fitness: [
+    'PT 1회 80,000원. 초보자 맞춤. 1:1 관리, 식단 상담 포함. 주차 무료. 첫 방문 체험 50% 할인.',
+    '다이어트 그룹 PT 8회 200,000원. 체중 감량 목표. 소그룹 수업, 인바디 무료. 상담 예약 가능.',
+  ],
+  pet: [
+    '노즈워크 클래스 1회 30,000원. 소형견/중형견. 실내 진행, 비 오는 날도 OK. 픽업 서비스 가능.',
+    '고양이 그루밍 25,000원. 스트레스 해소. 무알러지 샴푸 사용. 당일 예약 가능.',
+  ],
+  education: [
+    '초등 수학 1:1 과외 월 40만원. 초등 3~6학년. 소수 정예, 맞춤 커리큘럼. 첫 달 무료 체험.',
+    '성인 영어 회화 그룹 월 12만원. 왕초보~중급. 원어민 강사, 주 2회. 수업료 첫 달 50% 할인.',
+  ],
+};
+
+// 업종+지역 기반 키워드 추천 (업종 기본 3~4개, 지역 있으면 1~2개 추가)
+const getRecommendedKeywords = (domainId: string, region: string): string[] => {
+  const baseKeywords: Record<string, string[]> = {
+    food: ['맛집', '점심특선', '가족외식', '데이트코스'],
+    beauty: ['네일아트', '페이셜', '스킨케어', '당일예약'],
+    retail: ['신상품', '할인', '무료배송', '한정수량'],
+    cafe: ['카페', '브런치', '디저트', '로스팅'],
+    fitness: ['PT', '다이어트', '헬스', '체형교정'],
+    pet: ['펫샵', '그루밍', '훈련', '반려동물'],
+    education: ['과외', '입시', '영어회화', '수학'],
+  };
+  const regionSuffix: Record<string, string> = {
+    food: '맛집', beauty: '뷰티', retail: '쇼핑', cafe: '카페',
+    fitness: '헬스', pet: '펫샵', education: '학원',
+  };
+  const base = baseKeywords[domainId] || baseKeywords.food;
+  const trimmed = region.trim();
+  if (!trimmed) return base.slice(0, 4);
+  const suffix = regionSuffix[domainId] || '추천';
+  const regionTags = [`${trimmed}${suffix}`, `${trimmed}추천`].slice(0, 2);
+  return [...base.slice(0, 3), ...regionTags].slice(0, 5);
+};
 const MAX_IMAGES = 1; // 페이로드 크기 제한으로 1장만 허용
 
 interface GenerateResult {
@@ -86,6 +152,7 @@ function StudioPageContent() {
   const [isDragging, setIsDragging] = useState(false);
   const [previewMode, setPreviewMode] = useState<'plain' | 'blog'>('plain');
   const [userPlan, setUserPlan] = useState<string>('FREE');
+  const [showMemoExamples, setShowMemoExamples] = useState(false);
   const trimmedBrandName = brandName.trim();
   const trimmedRegion = region.trim();
   const isSearchInfoReady = Boolean(trimmedBrandName) && Boolean(trimmedRegion);
@@ -673,13 +740,39 @@ function StudioPageContent() {
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="예: 점심특선 8,000원, 맵지 않아요, 가족외식 추천"
+                  placeholder={MEMO_PLACEHOLDERS[domainId] || MEMO_PLACEHOLDERS.food}
                   rows={5}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-primary focus:border-transparent resize-none text-base text-gray-900 placeholder:text-gray-400"
                 />
-                <div className="text-xs sm:text-sm text-gray-500 mt-1 text-right">
-                  {notes.length}자
+                <div className="flex items-center justify-between mt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowMemoExamples((prev) => !prev)}
+                    className="text-sm text-brand-primary hover:text-brand-primary/80 font-medium flex items-center gap-1"
+                  >
+                    ✏️ 잘 쓴 메모 예시 보기
+                    <span className="text-gray-400">{showMemoExamples ? '▲' : '▼'}</span>
+                  </button>
+                  <span className="text-xs sm:text-sm text-gray-500">{notes.length}자</span>
                 </div>
+                {showMemoExamples && MEMO_EXAMPLES[domainId] && (
+                  <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-100 space-y-2">
+                    <p className="text-xs text-gray-500 mb-2">클릭하면 메모창에 입력됩니다</p>
+                    {MEMO_EXAMPLES[domainId].map((example, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setNotes(example);
+                          setToast({ message: '예시가 메모창에 입력되었습니다.', type: 'success' });
+                        }}
+                        className="w-full text-left px-3 py-2 hover:bg-white rounded-lg border border-gray-100 text-sm text-gray-700 hover:border-brand-primary/30 hover:bg-brand-primary/5 transition-all"
+                      >
+                        {example}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* 키워드 입력 */}
@@ -694,6 +787,38 @@ function StudioPageContent() {
                   placeholder="아롱사태전골, 점심특선, 가족외식"
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-primary focus:border-transparent text-base text-gray-900 placeholder:text-gray-400"
                 />
+                {(domainId || trimmedRegion) && (
+                  <div className="mt-2">
+                    <p className="text-xs text-gray-500 mb-2">추천 태그 (클릭하여 추가)</p>
+                    <div className="flex flex-wrap gap-2">
+                      {getRecommendedKeywords(domainId, trimmedRegion).map((tag) => {
+                        const currentTags = keywords.split(',').map((k) => k.trim()).filter(Boolean);
+                        const isAdded = currentTags.includes(tag);
+                        return (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => {
+                              if (isAdded) return;
+                              const newTags = currentTags.length ? [...currentTags, tag] : [tag];
+                              setKeywords(newTags.join(', '));
+                              setToast({ message: `"${tag}" 추가됨`, type: 'success' });
+                            }}
+                            disabled={isAdded}
+                            className={`px-3 py-1 text-sm rounded-full border transition-all ${
+                              isAdded
+                                ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-default'
+                                : 'bg-white text-gray-700 border-gray-200 hover:border-brand-primary hover:bg-brand-primary/5'
+                            }`}
+                          >
+                            {tag}
+                            {isAdded && ' ✓'}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* 플랫폼 선택 */}

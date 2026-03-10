@@ -1,16 +1,13 @@
 /**
- * Google AI (Gemini) 클라이언트
+ * Anthropic Claude 클라이언트
  * 콘텐츠 생성 및 이미지 분석
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Anthropic from '@anthropic-ai/sdk';
 
-const apiKey = process.env.GOOGLE_API_KEY;
-if (!apiKey) {
-  throw new Error('GOOGLE_API_KEY is not set');
-}
-
-const genAI = new GoogleGenerativeAI(apiKey);
+const client = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
 
 /**
  * 텍스트 콘텐츠 생성
@@ -23,39 +20,45 @@ export async function generateContent(
   imageBase64?: string
 ): Promise<string> {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-
     if (imageBase64) {
-      // 멀티모달 (이미지 + 텍스트)
-      // Base64 이미지를 파트로 변환
       const mimeMatch = imageBase64.match(/^data:image\/(\w+);base64,/);
-      let mimeType = 'image/jpeg'; // 기본값
-      
+      let mimeType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp' = 'image/jpeg';
+
       if (mimeMatch) {
         const imageType = mimeMatch[1].toLowerCase();
-        // jpg를 jpeg로 정규화하고 image/ 접두사 추가
-        if (imageType === 'jpg') {
-          mimeType = 'image/jpeg';
-        } else {
-          mimeType = `image/${imageType}`;
-        }
+        if (imageType === 'png') mimeType = 'image/png';
+        else if (imageType === 'gif') mimeType = 'image/gif';
+        else if (imageType === 'webp') mimeType = 'image/webp';
       }
-      
-      const imagePart = {
-        inlineData: {
-          data: imageBase64.replace(/^data:image\/\w+;base64,/, ''),
-          mimeType: mimeType,
-        },
-      };
 
-      const result = await model.generateContent([prompt, imagePart]);
-      const response = await result.response;
-      return response.text();
+      const response = await client.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2048,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: mimeType,
+                data: imageBase64.replace(/^data:image\/\w+;base64,/, ''),
+              },
+            },
+            { type: 'text', text: prompt },
+          ],
+        }],
+      });
+
+      return response.content[0].type === 'text' ? response.content[0].text : '';
     } else {
-      // 텍스트만
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      return response.text();
+      const response = await client.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2048,
+        messages: [{ role: 'user', content: prompt }],
+      });
+
+      return response.content[0].type === 'text' ? response.content[0].text : '';
     }
   } catch (error) {
     console.error('Error generating content:', error);
@@ -75,4 +78,3 @@ export async function analyzeImage(
 ): Promise<string> {
   return generateContent(analysisPrompt, imageBase64);
 }
-

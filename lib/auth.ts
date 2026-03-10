@@ -94,17 +94,29 @@ export const authOptions: NextAuthOptions = {
         password: { label: '비밀번호', type: 'password' },
       },
       async authorize(credentials) {
+        const rawEmail = credentials?.email;
+        const rawPassword = credentials?.password;
+
         console.log('🔵 [AUTH] 로그인 시도:', {
-          email: credentials?.email,
+          email: rawEmail,
         });
 
-        if (!credentials?.email || !credentials?.password) {
-          console.warn('⚠️ [AUTH] 이메일 또는 비밀번호가 없습니다.');
+        // 이메일/비밀번호가 없거나 문자열이 아니면 즉시 실패 처리
+        if (
+          typeof rawEmail !== 'string' ||
+          typeof rawPassword !== 'string' ||
+          !rawEmail.trim() ||
+          !rawPassword
+        ) {
+          console.warn('⚠️ [AUTH] 유효하지 않은 이메일 또는 비밀번호 입력:', {
+            hasEmail: typeof rawEmail === 'string' && !!rawEmail.trim(),
+            hasPassword: typeof rawPassword === 'string' && !!rawPassword,
+          });
           return null;
         }
 
-        const email = credentials.email.trim().toLowerCase();
-        const password = credentials.password;
+        const email = rawEmail.trim().toLowerCase();
+        const password = rawPassword;
 
         try {
           // 1. 데이터베이스에서 사용자 찾기

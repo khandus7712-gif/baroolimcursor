@@ -19,6 +19,7 @@
     "test:google": "node scripts/test-google-oauth.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
     "@aws-sdk/client-s3": "^3.654.0",
     "@aws-sdk/s3-request-presigner": "^3.930.0",
     "@google/generative-ai": "^0.21.0",

@@ -153,6 +153,7 @@ function StudioPageContent() {
   const [previewMode, setPreviewMode] = useState<'plain' | 'blog'>('plain');
   const [userPlan, setUserPlan] = useState<string>('FREE');
   const [showMemoExamples, setShowMemoExamples] = useState(false);
+  const [writingPurpose, setWritingPurpose] = useState<'seo' | 'aeo'>('seo');
   const trimmedBrandName = brandName.trim();
   const trimmedRegion = region.trim();
   const isSearchInfoReady = Boolean(trimmedBrandName) && Boolean(trimmedRegion);
@@ -423,6 +424,7 @@ function StudioPageContent() {
       }
       selectedPlugins.forEach(pluginId => formData.append('plugins', pluginId));
       formData.append('enableSearch', enableSearch ? 'true' : 'false');
+      formData.append('writingPurpose', writingPurpose);
 
       console.log('[generate] Sending request to /api/generate');
       const response = await fetch('/api/generate', {
@@ -819,6 +821,40 @@ function StudioPageContent() {
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* 글쓰기 목적 (SEO / AEO) */}
+              <div className="mb-6">
+                <div className="mb-3">
+                  <label className="block text-lg font-semibold text-gray-900 mb-1">
+                    글쓰기 목적
+                  </label>
+                  <p className="text-sm text-gray-600">검색 노출 방식을 선택하세요</p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setWritingPurpose('seo')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg border transition-all font-medium ${
+                      writingPurpose === 'seo'
+                        ? 'border-brand-primary bg-brand-primary/10 text-brand-primary'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                    }`}
+                  >
+                    네이버 검색 노출 (SEO)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setWritingPurpose('aeo')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg border transition-all font-medium ${
+                      writingPurpose === 'aeo'
+                        ? 'border-brand-primary bg-brand-primary/10 text-brand-primary'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                    }`}
+                  >
+                    AI 검색 노출 (AEO)
+                  </button>
+                </div>
               </div>
 
               {/* 플랫폼 선택 */}

@@ -15,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // TODO: 실제 인증 구현 필요
     const userId = (req.headers['x-user-id'] as string) || 'anonymous';
 
-    const { domainId, kpis, tone, forbiddenWords, cta, brandName } = req.body;
+    const { domainId, kpis, tone, forbiddenWords, cta, brandName, phoneNumber, kakaoChannel } = req.body;
 
     if (!domainId) {
       return res.status(400).json({ error: 'domainId is required' });
@@ -39,6 +39,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ? [...(baseDomainProfile.bannedPhrases || []), ...forbiddenWords]
         : baseDomainProfile.bannedPhrases,
       sampleCTAs: cta ? [cta, ...(baseDomainProfile.sampleCTAs || [])] : baseDomainProfile.sampleCTAs,
+      // 블로그 CTA 연락처 자동 삽입용 (선택)
+      phoneNumber: phoneNumber || undefined,
+      kakaoChannel: kakaoChannel || undefined,
     };
 
     // DomainConfig 저장 또는 업데이트

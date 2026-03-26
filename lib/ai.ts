@@ -33,7 +33,8 @@ export async function generateContent(
 
       const response = await client.messages.create({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 2048,
+        // 블로그는 본문 분량이 크기 때문에 출력 토큰을 충분히 확보
+        max_tokens: 4096,
         messages: [{
           role: 'user',
           content: [
@@ -54,7 +55,8 @@ export async function generateContent(
     } else {
       const response = await client.messages.create({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 2048,
+        // 블로그는 본문 분량이 크기 때문에 출력 토큰을 충분히 확보
+        max_tokens: 4096,
         messages: [{ role: 'user', content: prompt }],
       });
 

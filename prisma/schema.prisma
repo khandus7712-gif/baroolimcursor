@@ -23,6 +23,8 @@ model User {
   email     String?  @unique
   name      String?
   password  String?  // 이메일/비밀번호 로그인용 (해시된 비밀번호)
+  city      String?  @default("서울") // 사용자 기본 지역
+  industry  String?                  // 업종 (예: 음식/식당, 뷰티/미용 등)
   
   // NextAuth 필수 필드
   emailVerified DateTime?
@@ -47,6 +49,7 @@ model User {
   generations    Generation[]
   scheduledPosts ScheduledPost[]
   userPasses     UserPass[]
+  dailySuggestions DailySuggestion[]
 }
 
 // NextAuth.js 테이블
@@ -233,4 +236,21 @@ model Waitlist {
   @@index([email])
   @@index([createdAt])
   @@index([notified])
+}
+
+model DailySuggestion {
+  id              String   @id @default(cuid())
+  userId          String
+  date            DateTime            // YYYY-MM-DD 기준 (자정 기준)
+  city            String
+  weather         String              // 날씨 요약 JSON
+  suggestion      String              // Claude가 생성한 텍스트
+  regenerateCount Int      @default(0) // 오늘 재생성 횟수
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date], name: "daily_suggestions_user_date_idx")
 }

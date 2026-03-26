@@ -14,7 +14,7 @@ import { canAccessDomain, type SubscriptionPlan } from '@/lib/profileLoader';
 import { loadDomainProfile, loadPlatformTemplate } from '@/lib/profileLoader';
 import { composePrompt } from '@/lib/promptComposer';
 import { generateContent } from '@/lib/ai';
-import { runPostProcess } from '@/lib/postProcess';
+import { runPostProcess, checkFinalSentencePunctuation } from '@/lib/postProcess';
 import { searchWeb, formatSearchResultsForPrompt, shouldSearchWeb, buildSearchQuery } from '@/lib/webSearch';
 import { getPlugins } from '@/plugins/hashtag';
 import { uploadBase64Image } from '@/lib/storage';
@@ -136,6 +136,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     const plugins = Array.isArray(fields.plugins) ? fields.plugins : fields.plugins ? [fields.plugins] : [];
     const enableSearch = fields.enableSearch === 'true';
+    const writingPurpose = (fields.writingPurpose as string) === 'aeo' ? 'aeo' : 'seo';
 
     // 필수 필드 검증
     if (!domainId || !platformId || !notes) {
@@ -171,8 +172,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // 5. 도메인 및 플랫폼 프로필 로드
-    const domainProfile = loadDomainProfile(domainId);
+    let domainProfile = loadDomainProfile(domainId);
     const platformTemplate = loadPlatformTemplate(platformId);
+
+    // 5-1. 온보딩에서 저장한 사용자 설정(domainConfig) 주입
+    // - CTA(전화/카카오) 자동 삽입용 연락처 정보 수집
+    // - sampleCTAs(= cta_text)도 사용자 설정이 있으면 우선 적용
+    let contact: { phoneNumber?: string; kakaoChannel?: string } = {};
+    try {
+      const domainConfigRow = await prisma.domainConfig.findUnique({
+        where: { domainId },
+        select: { config: true },
+      });
+
+      const cfg = (domainConfigRow?.config || {}) as any;
+      if (typeof cfg.phoneNumber === 'string' && cfg.phoneNumber.trim()) contact.phoneNumber = cfg.phoneNumber.trim();
+      if (typeof cfg.kakaoChannel === 'string' && cfg.kakaoChannel.trim()) contact.kakaoChannel = cfg.kakaoChannel.trim();
+
+      domainProfile = {
+        ...domainProfile,
+        ...(Array.isArray(cfg.kpis) ? { kpis: cfg.kpis } : {}),
+        ...(cfg.tone ? { tone: cfg.tone } : {}),
+        ...(Array.isArray(cfg.bannedPhrases) ? { bannedPhrases: cfg.bannedPhrases } : {}),
+        ...(Array.isArray(cfg.sampleCTAs) && cfg.sampleCTAs.length > 0 ? { sampleCTAs: cfg.sampleCTAs } : {}),
+      };
+    } catch (e) {
+      console.warn('Failed to load domainConfig for CTA/contact:', e);
+    }
 
     // 6. 이미지 처리
     let imageBase64: string | undefined;
@@ -233,18 +259,53 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         link,
       },
       searchContext,
+      writingPurpose,
+      contact,
     });
 
     // 10. AI 콘텐츠 생성
     const generatedText = await generateContent(prompt, imageBase64);
 
     // 11. 후처리
-    const processed = await runPostProcess(generatedText, {
+    let processed = await runPostProcess(generatedText, {
       domain: domainProfile,
       platform: platformTemplate,
       region,
       keywords,
     });
+
+    // 11-1. 블로그 결과 잘림(truncation) 가능성 검증
+    // - 마지막 문장이 . ? ! 로 끝나지 않으면 잘렸을 가능성을 경고
+    // - 감지되면 한 번 더 재생성 시도(자동 복구)
+    if (platformTemplate.id === 'blog') {
+      const check = checkFinalSentencePunctuation(processed.output);
+      if (!check.ok) {
+        processed.warnings.push('블로그 본문이 문장 종료 구두점(. ? !) 없이 끝날 가능성이 있습니다. (잘림 감지)');
+
+        try {
+          const retryPrompt = `${prompt}\n\n중요: 출력의 마지막 문장은 반드시 . ? ! 중 하나로 끝내라.`;
+          const retryGeneratedText = await generateContent(retryPrompt, imageBase64);
+          const retryProcessed = await runPostProcess(retryGeneratedText, {
+            domain: domainProfile,
+            platform: platformTemplate,
+            region,
+            keywords,
+          });
+
+          const retryCheck = checkFinalSentencePunctuation(retryProcessed.output);
+          if (retryCheck.ok) {
+            retryProcessed.warnings.push('자동 재생성으로 문장 종료 구두점을 보정했습니다.');
+            processed = retryProcessed;
+          } else {
+            retryProcessed.warnings.push('자동 재생성에도 문장 종료 구두점(. ? !) 검증에 실패했습니다. 다시 생성해 주세요.');
+            processed = retryProcessed;
+          }
+        } catch (retryError) {
+          console.warn('Retry generation failed:', retryError);
+          processed.warnings.push('재생성 시도에 실패했습니다. 다시 생성해 주세요.');
+        }
+      }
+    }
 
     // 12. 크레딧 차감 (성공 후)
     await deductGeneration(userId);
@@ -264,6 +325,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             link,
             plugins,
             enableSearch,
+            writingPurpose,
           },
           output: {
             content: processed.output,
@@ -273,6 +335,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           metadata: {
             imageUrl,
             platformId,
+            writingPurpose,
           },
         },
       });

@@ -13,6 +13,10 @@ import type { Plugin } from '@/types/plugin';
 export interface PromptComposerInput {
   domain: DomainProfile;
   platform: PlatformTemplate;
+  contact?: {
+    phoneNumber?: string;
+    kakaoChannel?: string;
+  };
   brand?: {
     name: string;
     tone?: string;
@@ -28,6 +32,7 @@ export interface PromptComposerInput {
     link?: string;
   };
   searchContext?: string; // 웹 검색 결과 (포맷팅된 문자열)
+  writingPurpose?: 'seo' | 'aeo'; // 글쓰기 목적: 네이버 검색(SEO) vs AI 검색(AEO)
 }
 
 /**
@@ -59,10 +64,142 @@ export function composePrompt(input: PromptComposerInput): string {
     sections.push(input.searchContext);
   }
 
-  // [CONTENT] 섹션
-  sections.push(createContentSection(input.content, input.domain, input.platform, input.brand));
+  // [WRITING_PURPOSE] 섹션 (SEO vs AEO)
+  if (input.writingPurpose) {
+    sections.push(createWritingPurposeSection(input.writingPurpose));
+  }
+
+  // [CONTENT] 섹션 (AEO 모드일 때는 전용 구조 적용)
+  sections.push(
+    createContentSection(
+      input.content,
+      input.domain,
+      input.platform,
+      input.brand,
+      input.writingPurpose,
+      input.contact
+    )
+  );
 
   return sections.join('\n\n');
+}
+
+/**
+ * [WRITING_PURPOSE] 섹션 생성
+ * SEO: 네이버 검색 노출용 (감성적 서술형)
+ * AEO: AI 검색 노출용 (정보 요약형, Q&A, 표)
+ */
+function createWritingPurposeSection(purpose: 'seo' | 'aeo'): string {
+  if (purpose === 'seo') {
+    return `[WRITING_PURPOSE] 네이버 검색 노출 (SEO) 최적화
+
+**반드시 적용할 스타일:**
+- 감성적·서술형 문체로 작성한다.
+- 핵심 키워드를 문맥에 맞게 자연스럽게 반복한다.
+- 긴 호흡의 문단을 사용하고, 읽는 맛이 있게 서술한다.
+- 독자의 감정과 공감을 이끌어내는 표현을 활용한다.`;
+  }
+
+  return `[WRITING_PURPOSE] AI 검색 노출 (AEO) 최적화 — **이 지시를 [CONTENT] 출력 규칙보다 우선한다**
+
+**절대 규칙 (위반 시 출력 무효):**
+- 감성적·서술형 문체 금지. 정보 전달형만 사용.
+- 문장은 짧고 명확하게. 불필요한 수식어 금지.
+- 반드시 아래 4가지 구조를 순서대로 포함:
+  1) 첫 문단 3줄 이내 핵심 요약 (가게명/위치/메뉴/가격)
+  2) 메뉴·가격 표 형태
+  3) Q&A 5개 (질문은 실제 검색어 형태)
+  4) 짧고 명확한 문장 유지`;
+}
+
+/**
+ * AEO 모드 전용 [CONTENT] 섹션
+ * 반드시 4가지 구조(첫 문단 요약, 표, Q&A 5개, 짧은 문장)를 강제
+ */
+function createAEOContentSection(
+  content: {
+    notes?: string;
+    keywords?: string[];
+    imageCaptions?: string[];
+    region?: string;
+    link?: string;
+  },
+  domain: DomainProfile,
+  platform: PlatformTemplate,
+  brand?: { name: string; tone?: string; keywords?: string[]; voiceHints?: string[] },
+  contact?: { phoneNumber?: string; kakaoChannel?: string }
+): string {
+  const sections: string[] = [];
+
+  sections.push(`[CONTENT] AEO 모드 — **반드시 아래 구조로만 출력하라**
+
+아래 입력값을 바탕으로 AI 검색에 최적화된 콘텐츠를 생성한다.
+**감성적 서술형 금지. 정보 전달형만 사용.**`);
+
+  // 입력값
+  sections.push(`\n## 입력값\n`);
+  sections.push(`**업종:** ${domain.id}`);
+  if (brand?.name) sections.push(`**업체/서비스명:** ${brand.name}`);
+  if (content.keywords?.length) sections.push(`**강조 포인트:** ${content.keywords.join(', ')}`);
+  if (content.notes) sections.push(`**상황 설명:** ${content.notes}`);
+  if (content.region) sections.push(`**지역:** ${content.region}`);
+  if (content.link) sections.push(`**링크:** ${content.link}`);
+  if (content.imageCaptions?.length) {
+    sections.push(`\n**이미지 설명:**`);
+    content.imageCaptions.forEach((c, i) => sections.push(`${i + 1}. ${c}`));
+  }
+
+  // CTA/연락처 (AEO에서도 마지막에 반드시 포함)
+  const ctaText = domain.sampleCTAs && domain.sampleCTAs.length > 0
+    ? domain.sampleCTAs[0]
+    : '지금 바로 상담받아보세요!';
+  sections.push(`\n**CTA 문구(cta_text):** ${ctaText}`);
+
+  const contactLines: string[] = [];
+  if (contact?.phoneNumber) contactLines.push(`전화: ${contact.phoneNumber}`);
+  if (contact?.kakaoChannel) contactLines.push(`카카오 채널: ${contact.kakaoChannel}`);
+  if (contactLines.length > 0) {
+    sections.push(`**연락처 안내(contact):** ${contactLines.join(' / ')}`);
+  }
+
+  sections.push(`\n## 🚨 출력 구조 (순서·형식 준수 필수)
+
+### 1. 첫 문단 — 핵심 요약 (3줄 이내)
+- 가게명/업체명, 위치, 대표 메뉴/서비스, 가격을 한눈에 요약
+- 3줄을 초과하지 않는다
+- 감성적 표현 없이 사실만 나열
+
+### 2. 메뉴/가격 표 (업종에 맞게)
+- 반드시 표 형태로 작성 (예: | 메뉴 | 가격 | 비고 |)
+- 메뉴/서비스/상품이 없으면 운영정보·가격정보 표로 대체
+- 표가 없으면 출력 무효
+
+### 3. Q&A 5개 (실제 검색어 형태 질문)
+- 질문은 사용자가 실제로 검색할 법한 형태 (예: "OO 맛집 가격", "OO 예약 방법", "OO 영업시간")
+- Q: (질문) / A: (답변) 형식
+- 답변은 1~2문장으로 짧게
+
+### 4. 문장 스타일
+- 모든 문장은 짧고 명확하게
+- 수식어·감성 표현 최소화
+- 정보 전달 우선
+
+### 5. 마무리 — 결론 및 CTA(필수)
+- 마지막 문단에 반드시 CTA 문구(cta_text)를 포함한다
+- 연락처(contact)가 있으면 CTA 문단에 함께 포함한다 (전화/카카오)
+- URL(link)이 있으면 반드시 "링크 및 참고 자료: <URL>" 형태로 함께 포함한다
+- CTA 문단은 2~3문장 이내로 짧게 작성한다`);
+
+  if (domain.mandatoryPhrases?.length) {
+    sections.push(`\n**필수 구문:** ${domain.mandatoryPhrases.join(', ')}`);
+  }
+  if (domain.bannedPhrases?.length) {
+    sections.push(`\n**금지 구문:** ${domain.bannedPhrases.join(', ')}`);
+  }
+
+  sections.push(`\n**언어:** 한국어만 사용.`);
+
+  return sections.join('\n');
 }
 
 /**
@@ -185,8 +322,15 @@ function createContentSection(
   },
   domain: DomainProfile,
   platform: PlatformTemplate,
-  brand?: { name: string; tone?: string; keywords?: string[]; voiceHints?: string[] }
+  brand?: { name: string; tone?: string; keywords?: string[]; voiceHints?: string[] },
+  writingPurpose?: 'seo' | 'aeo',
+  contact?: { phoneNumber?: string; kakaoChannel?: string }
 ): string {
+  // AEO 모드: 플랫폼별 SEO 프롬프트 무시, 전용 구조 강제
+  if (writingPurpose === 'aeo') {
+    return createAEOContentSection(content, domain, platform, brand, contact);
+  }
+
   const sections: string[] = ['[CONTENT]\n\nCreate marketing content with the following information:'];
 
   // 이미지 캡션 (Vision 전처리 결과)
@@ -236,7 +380,7 @@ function createContentSection(
 
   // 블로그 플랫폼일 때 특별한 프롬프트 적용
   if (platform.id === 'blog') {
-    return createBlogPrompt(content, domain, brand);
+    return createBlogPrompt(content, domain, brand, contact);
   }
 
   // Threads 플랫폼일 때 특별한 프롬프트 적용
@@ -264,6 +408,28 @@ function createContentSection(
 /**
  * 블로그용 상세 프롬프트 생성 (1,500자 이상 버전)
  */
+const BLOG_INDUSTRY_HASHTAG_SEED_MAP: Record<string, string[]> = {
+  food: ['맛집', '식당', '외식', '맛스타그램', '데이트코스', '점심특선', '가족외식', '파스타', '피자', '스테이크', '분식'],
+  beauty: ['뷰티', '미용실', '네일아트', '컷트', '펌', '컬러', '헤어스타일', '메이크업', '피부관리', '에스테틱', '뷰티트렌드'],
+  retail: ['신상품', '할인', '무료배송', '한정수량', '특가', '리뷰', '구매후기', '생활용품', '홈데코', '재고', '배송'],
+  cafe: ['카페', '브런치', '디저트', '로스팅', '커피', '원두', '수제케이크', '오늘의카페', '테이크아웃', '디저트맛집'],
+  fitness: ['PT', '다이어트', '헬스', '운동', '체형교정', '인바디', '식단', '헬스장', '러닝', '근력운동'],
+  pet: ['펫샵', '그루밍', '노즈워크', '반려동물', '훈련', '강아지', '고양이', '케어', '안전', '픽업가능'],
+  education: ['학원', '과외', '입시', '영어회화', '수학', '스터디', '초등', '중등', '고등', '성인교육'],
+};
+
+// 업종 유형: product(상품판매) vs service(서비스업)
+// - retail만 product로 보고, 나머지는 service로 간주합니다.
+const BLOG_INDUSTRY_TYPE_MAP: Record<string, 'product' | 'service'> = {
+  retail: 'product',
+  food: 'service',
+  beauty: 'service',
+  cafe: 'service',
+  fitness: 'service',
+  pet: 'service',
+  education: 'service',
+};
+
 function createBlogPrompt(
   content: {
     notes?: string;
@@ -273,7 +439,8 @@ function createBlogPrompt(
     link?: string;
   },
   domain: DomainProfile,
-  brand?: { name: string; tone?: string; keywords?: string[]; voiceHints?: string[] }
+  brand?: { name: string; tone?: string; keywords?: string[]; voiceHints?: string[] },
+  contact?: { phoneNumber?: string; kakaoChannel?: string }
 ): string {
   const sections: string[] = [];
 
@@ -285,6 +452,13 @@ function createBlogPrompt(
   sections.push(`\n## 입력값\n`);
   
   sections.push(`**업종(type):** ${domain.id}`);
+
+  const industryType = BLOG_INDUSTRY_TYPE_MAP[domain.id] || 'service';
+
+  const industrySeeds = BLOG_INDUSTRY_HASHTAG_SEED_MAP[domain.id] || domain.hashtagSeeds || [];
+  if (industrySeeds.length > 0) {
+    sections.push(`**업종 해시태그 시드(우선 후보):** ${industrySeeds.join(', ')}`);
+  }
   
   if (brand?.name) {
     sections.push(`**서비스·제품명(name):** ${brand.name}`);
@@ -309,13 +483,37 @@ function createBlogPrompt(
   // 신뢰 포인트는 도메인의 compliance notes나 entities에서 추출
   const trustPoints: string[] = [];
   if (domain.complianceNotes && domain.complianceNotes.length > 0) {
-    trustPoints.push(...domain.complianceNotes.slice(0, 3));
+    const baseTrust = domain.complianceNotes.slice(0, 3);
+    // 서비스업에서는 재고/배송/환불/교환 관련 문구가 신뢰 포인트로 들어가지 않게 제거
+    const filteredTrust =
+      industryType === 'service'
+        ? baseTrust.filter((n) => !/(재고|배송|환불|교환)/.test(n))
+        : baseTrust;
+    trustPoints.push(...filteredTrust);
   }
   if (domain.entities && domain.entities.length > 0) {
-    trustPoints.push(`전문적인 ${domain.entities[0]} 관리`);
+    const ent = domain.entities[0];
+    const shouldPushEntity = industryType === 'service' ? !/(재고|배송|환불|교환)/.test(ent) : true;
+    if (shouldPushEntity) {
+      trustPoints.push(`전문적인 ${ent} 관리`);
+    }
   }
   if (trustPoints.length > 0) {
     sections.push(`**신뢰 포인트(trust_point):** ${trustPoints.join(', ')}`);
+  }
+
+  // 서비스업에서는 상품판매용 섹션을 절대 생성하지 말 것
+  if (industryType === 'service') {
+    sections.push(
+      `\n[금지: 서비스업 전용]\n` +
+        `아래 항목은 "상품 판매용(쇼핑몰용) 섹션"이므로 **서비스업 블로그에서는 절대 생성하지 마라**.\n` +
+        `- 재고 및 배송 정보\n` +
+        `- 재고/배송\n` +
+        `- 환불 및 교환 정책\n` +
+        `- 환불/교환\n` +
+        `- (배송/주문/반품/교환/재고 관련 문장)\n` +
+        `대신 "이용/예약/문의/상담/진행 과정" 중심으로 설명하라.`
+    );
   }
   
   // CTA 문구
@@ -323,6 +521,13 @@ function createBlogPrompt(
     ? domain.sampleCTAs[0] 
     : '지금 바로 확인해보세요!';
   sections.push(`**CTA 문구(cta_text):** ${ctaText}`);
+
+  const contactLines: string[] = [];
+  if (contact?.phoneNumber) contactLines.push(`전화: ${contact.phoneNumber}`);
+  if (contact?.kakaoChannel) contactLines.push(`카카오 채널: ${contact.kakaoChannel}`);
+  if (contactLines.length > 0) {
+    sections.push(`**연락처 안내(contact):** ${contactLines.join(' / ')}`);
+  }
   
   if (content.link) {
     sections.push(`**URL(url):** ${content.link}`);
@@ -353,9 +558,22 @@ function createBlogPrompt(
 
 **7. 분량:** 전체 글은 반드시 1,500자 이상이 되도록 작성하고, 가능하면 1,800~2,200자 사이를 목표로 한다.
 
-**8. 형식:** 문단 사이에 한 줄 공백을 넣어 가독성을 높인다. 해시태그는 사용하지 않는다.
+**8. 형식:** 문단 사이에 한 줄 공백을 넣어 가독성을 높인다.
+**8-1. 해시태그 출력 규칙:** 본문에는 해시태그(#...)를 절대 포함하지 않는다.
+**8-2. 해시태그 마커:** 마지막에 아래 마커를 그대로 출력한 뒤, 마커 아래 1줄로만 해시태그를 출력한다.
+마커 직전(마지막 문단/CTA 문단)에는 반드시 CTA 문구(cta_text)를 포함해라. 연락처(contact)가 있으면 함께 포함해라.
 
-**9. 마무리:** 마지막 문단에 자연스럽게 CTA 문구(cta_text)와 URL(url)을 넣어 행동을 유도한다.
+[[HASHTAGS]]
+#tag1 #tag2 ... (총 10~15개, 공백으로 구분)
+
+**8-3. 해시태그 생성 규칙:**
+- 해시태그는 본문에서 실제로 등장한 핵심 정보(메뉴/가격/지역/특징/상황/키워드)를 근거로 생성한다.
+- 후보는 업종 해시태그 시드(우선 후보)와 본문 근거를 함께 반영하되, 업종과 무관한 태그는 금지한다.
+- 블랙리스트 단어는 해시태그로 절대 사용하지 마라: 쇼핑, 패션, 스타일, 옷, 의류, 액세서리, 쇼핑스타그램, ootd.
+
+**9. 마무리(결론 및 CTA):** 마지막 문단(CTA 문단)에 반드시 CTA 문구(cta_text)를 포함해라. 연락처(contact)가 있으면 함께 포함해라.
+URL(link)이 있으면 반드시 "링크 및 참고 자료: <URL>" 형태로 함께 포함해라.
+CTA 문단은 2~3문장 이내로 짧고 자연스럽게(문의/예약 유도 중심) 작성해라.
 
 **10. 어투:** 친근한 구어체이되, 너무 가볍지 않게 정보와 신뢰를 함께 전달한다.
 

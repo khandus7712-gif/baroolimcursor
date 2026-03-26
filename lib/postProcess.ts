@@ -28,6 +28,128 @@ export interface PostProcessResult {
   warnings: string[];
 }
 
+// 블로그에서 업종과 무관하게 섞이는 태그를 제거하기 위한 블랙리스트
+// (postProcess 단계에서 태그 문자열 단위로 필터링)
+const BLOG_HASHTAG_BLACKLIST = [
+  '쇼핑',
+  '패션',
+  '스타일',
+  '옷',
+  '의류',
+  '액세서리',
+  '쇼핑스타그램',
+  'ootd',
+] as const;
+
+// 업종 유형: product(상품판매) vs service(서비스업)
+const BLOG_INDUSTRY_TYPE_MAP: Record<string, 'product' | 'service'> = {
+  retail: 'product',
+  food: 'service',
+  beauty: 'service',
+  cafe: 'service',
+  fitness: 'service',
+  pet: 'service',
+  education: 'service',
+};
+
+function isServiceBlogDomain(domainId: string): boolean {
+  return (BLOG_INDUSTRY_TYPE_MAP[domainId] || 'service') === 'service';
+}
+
+function filterServiceProductSections(text: string): { text: string; removed: boolean } {
+  // 서비스업 블로그에서 금지할 키워드(재고/배송/환불/교환)
+  const banned = /(재고|배송|환불|교환)/;
+  const lines = text.split('\n');
+  let removed = false;
+  const kept = lines.filter((line) => {
+    const hit = banned.test(line);
+    if (hit) removed = true;
+    return !hit;
+  });
+  const cleaned = kept.join('\n').replace(/\n{3,}/g, '\n\n');
+  return { text: cleaned, removed };
+}
+
+function filterBlogHashtags(hashtags: string[], platform: PlatformTemplate): string[] {
+  if (platform.id !== 'blog') return hashtags;
+
+  const exact = new Set(BLOG_HASHTAG_BLACKLIST.map((t) => t.toLowerCase()));
+  const substrings = BLOG_HASHTAG_BLACKLIST.map((t) => t.toLowerCase());
+
+  return hashtags.filter((tag) => {
+    const normalized = String(tag).toLowerCase().trim();
+    if (!normalized) return false;
+    if (exact.has(normalized)) return false;
+    // 예: ootd/ootd스타일 같은 변형도 제거
+    if (substrings.some((b) => normalized.includes(b))) return false;
+    return true;
+  });
+}
+
+type BlogHashtagExtraction = {
+  tags: string[];
+  cleanedText: string;
+};
+
+/**
+ * 블로그용: AI가 [[HASHTAGS]] 마커로 출력한 해시태그를 추출
+ * - marker가 없으면 tags: [] 반환
+ * - marker 포함 이후 내용을 output에서 제거
+ */
+function extractBlogHashtagsFromText(text: string): BlogHashtagExtraction {
+  const marker = '[[HASHTAGS]]';
+  const idx = text.indexOf(marker);
+  if (idx === -1) {
+    return { tags: [], cleanedText: text };
+  }
+
+  // marker는 제거하되, CTA처럼 marker 뒤에 이어서 작성된 본문은 최대한 보존한다.
+  const before = text.slice(0, idx).trimEnd();
+  const after = text.slice(idx + marker.length);
+
+  // marker 이후에서 #태그 형태(또는 #이 없는 단어) 후보를 최대한 추출
+  // - prompt에서 #을 포함하도록 강제하지만, 방어적으로 처리
+  const tokens = after.match(/#?[가-힣A-Za-z0-9_]+/g) ?? [];
+  const normalizedTags = tokens
+    .map((t) => t.trim())
+    .map((t) => (t.startsWith('#') ? t.slice(1) : t))
+    .map((t) => t.replace(/[^가-힣A-Za-z0-9_]/g, '').toLowerCase())
+    .filter((t) => t.length > 0);
+
+  // 중복 제거(순서 유지)
+  const seen = new Set<string>();
+  const uniqueTags: string[] = [];
+  for (const t of normalizedTags) {
+    if (!seen.has(t)) {
+      seen.add(t);
+      uniqueTags.push(t);
+    }
+  }
+
+  // after에서 "마커 다음의 해시태그(또는 빈줄) 시작 구간"만 제거하고,
+  // 그 다음에 CTA가 있으면 유지한다.
+  const afterLines = after.split(/\r?\n/);
+  let cursor = 0;
+  while (cursor < afterLines.length) {
+    const line = afterLines[cursor].trim();
+    // 빈 줄 / 해시태그 라인으로 시작하는 구간은 제거
+    if (line === '') {
+      cursor++;
+      continue;
+    }
+    if (line.startsWith('#')) {
+      cursor++;
+      continue;
+    }
+    break;
+  }
+
+  const remaining = afterLines.slice(cursor).join('\n').trimEnd();
+  const cleanedText = remaining ? `${before}\n${remaining}` : before;
+
+  return { tags: uniqueTags, cleanedText };
+}
+
 /**
  * 후처리 실행
  * @param text - 원본 텍스트
@@ -52,13 +174,40 @@ export async function runPostProcess(text: string, options: PostProcessOptions):
     warnings.push(mustIncludeChecked.warning);
   }
 
-  // 3. 해시태그 규칙: hashtagSeeds + 지역/메뉴/의도 키워드로 최대 platform.hashtagCount개
-  const hashtags = await generateHashtags(options.domain, options.platform, {
-    region: options.region,
-    keywords: options.keywords,
-    menuNames: options.menuNames,
-    intent: options.intent,
-  });
+  // 2-1. mustInclude 보정으로 인해 생성된 "X을(를) 강조합니다." 문구 제거
+  // - 예: "매력적인 제목 (H1)을(를) 강조합니다."
+  // - mustInclude의 기본값(default)으로 들어간 항목일 때 발생할 수 있음
+  processedText = removeMustIncludeEmphasisArtifacts(processedText);
+
+  // 3. 해시태그: 블로그는 AI가 [[HASHTAGS]] 마커로 만든 해시태그를 우선 사용
+  let hashtags: string[] = [];
+  if (options.platform.id === 'blog') {
+    const extracted = extractBlogHashtagsFromText(processedText);
+    if (extracted.tags.length > 0) {
+      processedText = extracted.cleanedText;
+      hashtags = filterBlogHashtags(extracted.tags, options.platform).slice(0, options.platform.hashtagCount);
+    }
+  }
+
+  // 3-1. 서비스업 블로그에서 상품/쇼핑몰용 섹션(재고/배송/환불/교환) 제거 검증
+  if (options.platform.id === 'blog' && isServiceBlogDomain(options.domain.id)) {
+    const filtered = filterServiceProductSections(processedText);
+    if (filtered.removed) {
+      processedText = filtered.text;
+      warnings.push('서비스업 블로그에서 재고/배송/환불/교환 관련 섹션 문구가 감지되어 제거했습니다.');
+    }
+  }
+
+  // 마커가 없거나(또는 파싱 실패) 빈 경우: 기존 seed 기반 해시태그 생성으로 폴백
+  if (hashtags.length === 0) {
+    // 3-1. 해시태그 규칙: hashtagSeeds + 지역/메뉴/의도 키워드로 최대 platform.hashtagCount개
+    hashtags = await generateHashtags(options.domain, options.platform, {
+      region: options.region,
+      keywords: options.keywords,
+      menuNames: options.menuNames,
+      intent: options.intent,
+    });
+  }
 
   // 4. 길이 제한 확인 및 조정
   if (processedText.length > options.platform.maxChars) {
@@ -74,6 +223,17 @@ export async function runPostProcess(text: string, options: PostProcessOptions):
     hashtags,
     warnings,
   };
+}
+
+/**
+ * 블로그 생성 결과가 문장 종료 구두점으로 끝나는지 간단 검증
+ * - 잘림(truncation) 가능성을 탐지하는 휴리스틱
+ */
+export function checkFinalSentencePunctuation(text: string): { ok: boolean; lastChar: string } {
+  const trimmed = String(text ?? '').trim();
+  const lastChar = trimmed.length > 0 ? trimmed.slice(-1) : '';
+  const ok = ['.', '?', '!'].includes(lastChar);
+  return { ok, lastChar };
 }
 
 /**
@@ -200,6 +360,21 @@ function generateMustIncludeAddition(item: string, platform: PlatformTemplate): 
 }
 
 /**
+ * mustInclude 보정의 기본(default) 문구 제거
+ * - mustInclude 항목이 additions 매칭에 없으면 `${item}을(를) 강조합니다.` 형태가 들어갈 수 있음
+ * - 해당 문구는 최종 결과에 그대로 노출되지 않도록 제거
+ */
+function removeMustIncludeEmphasisArtifacts(text: string): string {
+  // 줄 단위로 "무언가을(를) 강조합니다." 패턴 제거
+  // - H1/H2/H3 등 괄호가 포함되어도 그대로 매칭됨
+  let cleaned = text.replace(/^[^\n]*\s*을\(를\)\s*강조합니다\.?\s*$/gm, '');
+
+  // 연속 공백/개행 정리
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+  return cleaned;
+}
+
+/**
  * 해시태그 생성
  * @param domain - 도메인 프로필
  * @param platform - 플랫폼 템플릿
@@ -233,12 +408,15 @@ async function generateHashtags(
       domain.hashtagSeeds || []
     );
 
-    // 플랫폼별 최대 개수 제한
-    return hashtags.slice(0, platform.hashtagCount);
+    // 플랫폼별 블랙리스트 필터 + 최대 개수 제한
+    const filtered = filterBlogHashtags(hashtags, platform);
+    return filtered.slice(0, platform.hashtagCount);
   } catch (error) {
     // 플러그인을 사용할 수 없는 경우 기본 로직 사용
     console.warn('Hashtag plugin not available, using fallback logic:', error);
-    return generateHashtagsFallback(domain, platform, options);
+    const fallback = generateHashtagsFallback(domain, platform, options);
+    const filtered = filterBlogHashtags(fallback, platform);
+    return filtered.slice(0, platform.hashtagCount);
   }
 }
 

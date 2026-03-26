@@ -42,6 +42,8 @@ export default function OnboardingPage() {
   const [forbiddenWords, setForbiddenWords] = useState('');
   const [cta, setCta] = useState('');
   const [brandName, setBrandName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [kakaoChannel, setKakaoChannel] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userPlan, setUserPlan] = useState<string>('FREE');
@@ -97,6 +99,8 @@ export default function OnboardingPage() {
           : undefined,
         cta: cta || undefined,
         brandName: brandName || undefined,
+        phoneNumber: phoneNumber || undefined,
+        kakaoChannel: kakaoChannel || undefined,
       };
 
       // API 호출
@@ -114,7 +118,7 @@ export default function OnboardingPage() {
       }
 
       // 성공 시 스튜디오로 이동
-      router.push('/studio');
+      router.push(`/studio?domain=${encodeURIComponent(domainId)}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : '저장에 실패했습니다.');
     } finally {
@@ -210,6 +214,29 @@ export default function OnboardingPage() {
               onChange={(e) => setCta(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="예: 지금 예약하시고 특별한 혜택을 받아보세요!"
+            />
+          </div>
+
+          {/* 업체 연락처 */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">전화번호 (상담용, 선택사항)</label>
+            <input
+              type="text"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="예: 010-1234-5678"
+            />
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">카카오 채널 (상담용, 선택사항)</label>
+            <input
+              type="text"
+              value={kakaoChannel}
+              onChange={(e) => setKakaoChannel(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="예: @baroolim 또는 https://pf.kakao.com/xxxx"
             />
           </div>
 

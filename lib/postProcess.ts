@@ -70,6 +70,38 @@ function filterServiceProductSections(text: string): { text: string; removed: bo
   return { text: cleaned, removed };
 }
 
+function normalizeServiceBlogCTA(text: string): { text: string; changed: boolean } {
+  // 서비스업 블로그에서 쇼핑몰형 CTA(구매/할인/장바구니/🛍️ 등)가 마지막에 붙는 케이스 방어
+  const shoppingCTA = /지금\s*구매하시고\s*특별한\s*할인\s*혜택을\s*받아보세요!\s*🛍️?/g;
+  const otherShoppingSignals = /(장바구니|무료\s*배송|지금\s*주문|특가|쿠폰|할인\s*혜택|🛍️|🚚)/;
+
+  let changed = false;
+  let out = text;
+
+  if (shoppingCTA.test(out)) {
+    out = out.replace(shoppingCTA, '편하게 문의 주시면 상황에 맞춰 자세히 안내드릴게요.');
+    changed = true;
+  } else if (otherShoppingSignals.test(out)) {
+    // 문서 전체를 과하게 바꾸지 않도록: 마지막 400자 내에서만 치환 시도
+    const tailLen = 400;
+    const head = out.slice(0, Math.max(0, out.length - tailLen));
+    const tail = out.slice(Math.max(0, out.length - tailLen));
+    if (otherShoppingSignals.test(tail)) {
+      const cleanedTail = tail
+        .replace(/지금\s*구매[^\n]*?(🛍️|🚚)?/g, '편하게 문의 주세요. 빠르게 안내드릴게요.')
+        .replace(/장바구니[^\n]*?/g, '문의 주시면 안내드릴게요.')
+        .replace(/무료\s*배송[^\n]*?(🚚)?/g, '문의 주시면 안내드릴게요.')
+        .replace(/오늘만\s*특가[^\n]*?/g, '문의 주시면 안내드릴게요.');
+      if (cleanedTail !== tail) {
+        out = head + cleanedTail;
+        changed = true;
+      }
+    }
+  }
+
+  return { text: out, changed };
+}
+
 function filterBlogHashtags(hashtags: string[], platform: PlatformTemplate): string[] {
   if (platform.id !== 'blog') return hashtags;
 
@@ -195,6 +227,12 @@ export async function runPostProcess(text: string, options: PostProcessOptions):
     if (filtered.removed) {
       processedText = filtered.text;
       warnings.push('서비스업 블로그에서 재고/배송/환불/교환 관련 섹션 문구가 감지되어 제거했습니다.');
+    }
+
+    const normalized = normalizeServiceBlogCTA(processedText);
+    if (normalized.changed) {
+      processedText = normalized.text;
+      warnings.push('서비스업 블로그에서 쇼핑몰형 CTA 문구가 감지되어 상담 유도 문구로 교체했습니다.');
     }
   }
 

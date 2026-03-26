@@ -446,7 +446,8 @@ function createBlogPrompt(
 
   sections.push(`[CONTENT]
 
-아래 입력값을 바탕으로 **1,500자 이상(권장 1,800~2,200자)**의 네이버 블로그 글을 생성하라.`);
+아래 입력값을 바탕으로 **800~1,200자** 분량의 네이버 블로그 글을 생성하라.
+글이 1,200자를 넘지 않도록 내용을 압축하고, 불필요한 반복/군더더기를 제거하라.`);
 
   // 입력값 정리
   sections.push(`\n## 입력값\n`);
@@ -517,9 +518,20 @@ function createBlogPrompt(
   }
   
   // CTA 문구
-  const ctaText = domain.sampleCTAs && domain.sampleCTAs.length > 0 
-    ? domain.sampleCTAs[0] 
-    : '지금 바로 확인해보세요!';
+  const rawCtaText =
+    domain.sampleCTAs && domain.sampleCTAs.length > 0 ? domain.sampleCTAs[0] : '편하게 문의 주시면 자세히 안내드릴게요.';
+
+  // 서비스업 업종인데도 "구매/할인/배송" 같은 쇼핑몰 CTA가 섞이면 상담 유도 문구로 자동 치환
+  const serviceCtaFallbacks = [
+    '편하게 문의 주시면 상황에 맞춰 자세히 안내드릴게요.',
+    '궁금한 점은 편하게 연락 주시면 빠르게 상담 도와드릴게요.',
+    '예약/상담 문의는 부담 없이 연락 주세요. 친절히 안내드리겠습니다.',
+  ];
+  const looksLikeShoppingCTA = /(구매|주문|장바구니|무료\s*배송|배송|특가|할인|쿠폰|🛍️|🚚)/;
+  const ctaText =
+    industryType === 'service' && looksLikeShoppingCTA.test(rawCtaText)
+      ? serviceCtaFallbacks[0]
+      : rawCtaText;
   sections.push(`**CTA 문구(cta_text):** ${ctaText}`);
 
   const contactLines: string[] = [];
@@ -556,7 +568,7 @@ function createBlogPrompt(
 
 **6. 활용 팁·예시:** 실제 사용 상황, 추천 조합, 전/후 비교, 자주 받는 질문 등을 예시로 덧붙여 분량을 채운다.
 
-**7. 분량:** 전체 글은 반드시 1,500자 이상이 되도록 작성하고, 가능하면 1,800~2,200자 사이를 목표로 한다.
+**7. 분량:** 전체 글은 **800~1,200자** 사이로 작성한다. 1,200자를 넘지 마라.
 
 **8. 형식:** 문단 사이에 한 줄 공백을 넣어 가독성을 높인다.
 **8-1. 해시태그 출력 규칙:** 본문에는 해시태그(#...)를 절대 포함하지 않는다.

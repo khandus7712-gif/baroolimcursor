@@ -37,6 +37,24 @@ interface PlanInfo {
   features: string[];
 }
 
+interface StoreMenuItem {
+  name: string;
+  price: string;
+}
+
+interface StoreProfileForm {
+  storeName: string;
+  category: string;
+  storeAddress: string;
+  storePhone: string;
+  storeHours: string;
+  storeOffDay: string;
+  storeFeature: string;
+  storeIntro: string;
+  storeLink: string;
+  storeMenu: StoreMenuItem[];
+}
+
 const PLANS: PlanInfo[] = [
   {
     id: 'FREE',
@@ -64,11 +82,35 @@ const PLANS: PlanInfo[] = [
   },
 ];
 
+const STORE_CATEGORIES = [
+  { id: 'food', name: '음식점' },
+  { id: 'beauty', name: '뷰티/미용' },
+  { id: 'retail', name: '소매/유통' },
+  { id: 'cafe', name: '카페/베이커리' },
+  { id: 'fitness', name: '운동/헬스' },
+  { id: 'pet', name: '반려동물' },
+  { id: 'education', name: '교육/학원' },
+];
+
 export default function MyPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [savingStoreProfile, setSavingStoreProfile] = useState(false);
+  const [storeProfileMessage, setStoreProfileMessage] = useState<string | null>(null);
+  const [storeProfileForm, setStoreProfileForm] = useState<StoreProfileForm>({
+    storeName: '',
+    category: 'food',
+    storeAddress: '',
+    storePhone: '',
+    storeHours: '',
+    storeOffDay: '',
+    storeFeature: '',
+    storeIntro: '',
+    storeLink: '',
+    storeMenu: [{ name: '', price: '' }],
+  });
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -86,10 +128,96 @@ export default function MyPage() {
         const data = await response.json();
         setProfile(data);
       }
+      const storeRes = await fetch('/api/user/store-profile');
+      if (storeRes.ok) {
+        const storeData = await storeRes.json();
+        if (storeData?.profile) {
+          const p = storeData.profile;
+          const menus = Array.isArray(p.storeMenu) && p.storeMenu.length > 0
+            ? p.storeMenu.map((m: { name?: string; price?: number }) => ({
+                name: m?.name || '',
+                price: m?.price ? String(m.price) : '',
+              }))
+            : [{ name: '', price: '' }];
+          setStoreProfileForm({
+            storeName: p.storeName || '',
+            category: p.category || 'food',
+            storeAddress: p.storeAddress || '',
+            storePhone: p.storePhone || '',
+            storeHours: p.storeHours || '',
+            storeOffDay: p.storeOffDay || '',
+            storeFeature: p.storeFeature || '',
+            storeIntro: p.storeIntro || '',
+            storeLink: p.storeLink || '',
+            storeMenu: menus,
+          });
+        }
+      }
     } catch (error) {
       console.error('Failed to fetch profile:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateStoreMenu = (index: number, key: 'name' | 'price', value: string) => {
+    setStoreProfileForm((prev) => {
+      const next = [...prev.storeMenu];
+      next[index] = { ...next[index], [key]: value };
+      return { ...prev, storeMenu: next };
+    });
+  };
+
+  const addStoreMenu = () => {
+    setStoreProfileForm((prev) => ({ ...prev, storeMenu: [...prev.storeMenu, { name: '', price: '' }] }));
+  };
+
+  const removeStoreMenu = (index: number) => {
+    setStoreProfileForm((prev) => {
+      const next = prev.storeMenu.filter((_, i) => i !== index);
+      return { ...prev, storeMenu: next.length > 0 ? next : [{ name: '', price: '' }] };
+    });
+  };
+
+  const saveStoreProfile = async () => {
+    setStoreProfileMessage(null);
+    if (!storeProfileForm.storeName.trim()) {
+      setStoreProfileMessage('상호명을 입력해주세요.');
+      return;
+    }
+    if (!storeProfileForm.category.trim()) {
+      setStoreProfileMessage('업종 카테고리를 선택해주세요.');
+      return;
+    }
+    if (!storeProfileForm.storeAddress.trim()) {
+      setStoreProfileMessage('주소를 입력해주세요.');
+      return;
+    }
+
+    setSavingStoreProfile(true);
+    try {
+      const payload = {
+        ...storeProfileForm,
+        storeMenu: storeProfileForm.storeMenu
+          .map((m) => ({ name: m.name.trim(), price: m.price.trim() }))
+          .filter((m) => m.name),
+      };
+      const res = await fetch('/api/user/store-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setStoreProfileMessage(data?.error || '가게 프로필 저장에 실패했습니다.');
+        return;
+      }
+      setStoreProfileMessage('가게 프로필이 저장되었습니다.');
+    } catch (e) {
+      console.error('Failed to save store profile:', e);
+      setStoreProfileMessage('가게 프로필 저장 중 오류가 발생했습니다.');
+    } finally {
+      setSavingStoreProfile(false);
     }
   };
 
@@ -173,6 +301,149 @@ export default function MyPage() {
               로그아웃
             </button>
           </div>
+        </div>
+
+        {/* 가게 프로필 등록/수정 */}
+        <div className="bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 p-8 mb-6">
+          <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+            <Settings className="w-6 h-6 text-brand-neon-purple" />
+            가게 프로필
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-white/80 text-sm mb-2">상호명 *</label>
+              <input
+                value={storeProfileForm.storeName}
+                onChange={(e) => setStoreProfileForm((prev) => ({ ...prev, storeName: e.target.value }))}
+                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/40"
+                placeholder="예: 아롱하다"
+              />
+            </div>
+            <div>
+              <label className="block text-white/80 text-sm mb-2">업종 카테고리 *</label>
+              <select
+                value={storeProfileForm.category}
+                onChange={(e) => setStoreProfileForm((prev) => ({ ...prev, category: e.target.value }))}
+                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white"
+              >
+                {STORE_CATEGORIES.map((c) => (
+                  <option key={c.id} value={c.id} className="text-black">
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-white/80 text-sm mb-2">주소 *</label>
+              <input
+                value={storeProfileForm.storeAddress}
+                onChange={(e) => setStoreProfileForm((prev) => ({ ...prev, storeAddress: e.target.value }))}
+                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/40"
+                placeholder="예: 창원 의창구 도계동 OO번지 (OO 근처)"
+              />
+            </div>
+
+            <div>
+              <label className="block text-white/80 text-sm mb-2">전화번호</label>
+              <input
+                value={storeProfileForm.storePhone}
+                onChange={(e) => setStoreProfileForm((prev) => ({ ...prev, storePhone: e.target.value }))}
+                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/40"
+              />
+            </div>
+            <div>
+              <label className="block text-white/80 text-sm mb-2">영업시간</label>
+              <input
+                value={storeProfileForm.storeHours}
+                onChange={(e) => setStoreProfileForm((prev) => ({ ...prev, storeHours: e.target.value }))}
+                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/40"
+              />
+            </div>
+            <div>
+              <label className="block text-white/80 text-sm mb-2">정기 휴무</label>
+              <input
+                value={storeProfileForm.storeOffDay}
+                onChange={(e) => setStoreProfileForm((prev) => ({ ...prev, storeOffDay: e.target.value }))}
+                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/40"
+              />
+            </div>
+            <div>
+              <label className="block text-white/80 text-sm mb-2">예약/홈페이지 링크</label>
+              <input
+                value={storeProfileForm.storeLink}
+                onChange={(e) => setStoreProfileForm((prev) => ({ ...prev, storeLink: e.target.value }))}
+                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/40"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-white/80 text-sm mb-2">대표 메뉴</label>
+              <div className="space-y-2">
+                {storeProfileForm.storeMenu.map((menu, idx) => (
+                  <div key={`menu-${idx}`} className="grid grid-cols-12 gap-2">
+                    <input
+                      value={menu.name}
+                      onChange={(e) => updateStoreMenu(idx, 'name', e.target.value)}
+                      placeholder="메뉴명"
+                      className="col-span-7 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white placeholder:text-white/40"
+                    />
+                    <input
+                      value={menu.price}
+                      onChange={(e) => updateStoreMenu(idx, 'price', e.target.value)}
+                      placeholder="가격(원)"
+                      className="col-span-4 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white placeholder:text-white/40"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeStoreMenu(idx)}
+                      className="col-span-1 text-white/60 hover:text-white"
+                    >
+                      <X className="w-4 h-4 mx-auto" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addStoreMenu}
+                  className="text-sm text-brand-neon-purple hover:text-brand-neon-pink"
+                >
+                  + 메뉴 추가
+                </button>
+              </div>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-white/80 text-sm mb-2">가게 특징</label>
+              <input
+                value={storeProfileForm.storeFeature}
+                onChange={(e) => setStoreProfileForm((prev) => ({ ...prev, storeFeature: e.target.value }))}
+                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/40"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-white/80 text-sm mb-2">한 줄 소개</label>
+              <input
+                value={storeProfileForm.storeIntro}
+                onChange={(e) => setStoreProfileForm((prev) => ({ ...prev, storeIntro: e.target.value }))}
+                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/40"
+              />
+            </div>
+          </div>
+
+          <div className="mt-5 flex items-center justify-between">
+            <p className="text-sm text-white/60">저장하면 스튜디오 추가 설정 입력칸에 자동으로 채워집니다.</p>
+            <button
+              type="button"
+              onClick={saveStoreProfile}
+              disabled={savingStoreProfile}
+              className="bg-gradient-to-r from-brand-neon-purple to-brand-neon-pink px-6 py-2 rounded-xl font-bold text-white disabled:opacity-60"
+            >
+              {savingStoreProfile ? '저장 중...' : '저장하기'}
+            </button>
+          </div>
+          {storeProfileMessage && <p className="mt-3 text-sm text-white/80">{storeProfileMessage}</p>}
         </div>
 
         {/* 현재 플랜 */}

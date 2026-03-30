@@ -248,12 +248,12 @@ export async function runPostProcess(text: string, options: PostProcessOptions):
   }
 
   // 4. 길이 제한 확인 및 조정
-  // 4-0. 블로그는 목표 글자 수를 800~1,200자로 제한 (프롬프트를 따르지 않은 경우 방어적 트림)
+  // 4-0. 블로그는 목표 글자 수를 900~1,500자로 제한 (프롬프트를 따르지 않은 경우 방어적 트림)
   if (options.platform.id === 'blog') {
-    const maxTarget = 1200;
+    const maxTarget = 1500;
     const trimmed = processedText.trim();
     if (trimmed.length > maxTarget + 100) {
-      // 마지막 1200자 부근에서 문장/단락 경계로 최대한 자연스럽게 자르기
+      // 마지막 1500자 부근에서 문장/단락 경계로 최대한 자연스럽게 자르기
       const hard = trimmed.slice(0, maxTarget);
       const tailWindow = hard.slice(Math.max(0, hard.length - 120));
       const cutIdxInTail = Math.max(
@@ -265,7 +265,7 @@ export async function runPostProcess(text: string, options: PostProcessOptions):
       );
       const cutAt = cutIdxInTail > 20 ? hard.length - (tailWindow.length - cutIdxInTail) + 1 : hard.length;
       processedText = hard.slice(0, cutAt).trimEnd();
-      warnings.push('블로그 글자 수가 1,200자를 초과하여 1,200자 내로 자동 축약했습니다.');
+      warnings.push('블로그 글자 수가 1,500자를 초과하여 1,500자 내로 자동 축약했습니다.');
     }
   }
 

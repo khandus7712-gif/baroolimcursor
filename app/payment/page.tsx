@@ -344,25 +344,6 @@ function PaymentContent() {
                   ))}
                 </div>
 
-                {discountInfo?.isDiscountApplied && (
-                  <div className="mb-4 p-4 bg-green-500/20 border border-green-500/50 rounded-xl">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-green-200 text-sm font-semibold">사전예약 할인 적용</span>
-                      <span className="text-green-200 text-sm font-bold">30% 할인</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-white/60 text-sm line-through">
-                        ₩{discountInfo.originalAmount.toLocaleString()}
-                      </span>
-                      <span className="text-white text-lg font-bold">
-                        ₩{discountInfo.finalAmount.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="text-green-200/80 text-xs mt-2">
-                      할인 금액: ₩{discountInfo.discountAmount.toLocaleString()}
-                    </div>
-                  </div>
-                )}
                 <div className="flex items-center justify-between pt-4 border-t border-white/10">
                   <span className="text-white text-lg font-semibold">{priceLabel}</span>
                   <span className="text-3xl font-black text-brand-neon-purple">
@@ -394,17 +375,10 @@ function PaymentContent() {
                   <Check className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <span>언제든지 마이페이지에서 해지 가능합니다</span>
                 </div>
-                {discountInfo?.isDiscountApplied ? (
-                  <div className="flex items-start gap-2">
-                    <Check className="w-4 h-4 flex-shrink-0 mt-0.5 text-green-400" />
-                    <span className="text-green-200">사전예약 할인 30%가 적용됩니다 (2026년 1월까지)</span>
-                  </div>
-                ) : (
-                  <div className="flex items-start gap-2">
-                    <Check className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                    <span>사전예약 시 30% 할인 혜택을 받을 수 있습니다</span>
-                  </div>
-                )}
+                <div className="flex items-start gap-2">
+                  <Check className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>플랜 변경은 마이페이지에서 언제든 가능합니다</span>
+                </div>
               </div>
 
               <button

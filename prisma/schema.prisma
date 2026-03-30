@@ -50,6 +50,7 @@ model User {
   scheduledPosts ScheduledPost[]
   userPasses     UserPass[]
   dailySuggestions DailySuggestion[]
+  storeProfile   StoreProfile?
 }
 
 // NextAuth.js 테이블
@@ -253,4 +254,26 @@ model DailySuggestion {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, date], name: "daily_suggestions_user_date_idx")
+}
+
+model StoreProfile {
+  id           String   @id @default(cuid())
+  userId       String   @unique @map("user_id")
+  storeName    String   @map("store_name")
+  category     String
+  storeAddress String?  @map("store_address")
+  storePhone   String?  @map("store_phone")
+  storeHours   String?  @map("store_hours")
+  storeOffDay  String?  @map("store_off_day")
+  storeMenu    Json?    @map("store_menu")
+  storeFeature String?  @map("store_feature")
+  storeIntro   String?  @map("store_intro")
+  storeLink    String?  @map("store_link")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("store_profiles")
 }

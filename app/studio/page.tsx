@@ -119,6 +119,19 @@ interface GenerateResult {
   imageCaptions?: string[];
 }
 
+interface StoreProfile {
+  storeName: string;
+  category: string;
+  storeAddress?: string | null;
+  storePhone?: string | null;
+  storeHours?: string | null;
+  storeOffDay?: string | null;
+  storeMenu?: Array<{ name: string; price?: number }> | null;
+  storeFeature?: string | null;
+  storeIntro?: string | null;
+  storeLink?: string | null;
+}
+
 function StudioPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -140,8 +153,13 @@ function StudioPageContent() {
   const [domainId, setDomainId] = useState(searchParams?.get('domain') || 'food');
   const [platformId, setPlatformId] = useState('instagram');
   const [selectedPlugins, setSelectedPlugins] = useState<string[]>(['hashtag']);
-  const [brandName, setBrandName] = useState('');
-  const [region, setRegion] = useState('');
+  const [storeName, setStoreName] = useState('');
+  const [storeAddress, setStoreAddress] = useState('');
+  const [storeMenu, setStoreMenu] = useState('');
+  const [storeHours, setStoreHours] = useState('');
+  const [storeFeature, setStoreFeature] = useState('');
+  const [hasSavedStoreProfile, setHasSavedStoreProfile] = useState(false);
+  const [overrideStoreInfo, setOverrideStoreInfo] = useState(false);
   const [link, setLink] = useState('');
   const [voiceHints, setVoiceHints] = useState('');
   const [enableSearch, setEnableSearch] = useState(true); // 웹 검색 기본 활성화
@@ -154,9 +172,9 @@ function StudioPageContent() {
   const [userPlan, setUserPlan] = useState<string>('FREE');
   const [showMemoExamples, setShowMemoExamples] = useState(false);
   const [writingPurpose, setWritingPurpose] = useState<'seo' | 'aeo'>('seo');
-  const trimmedBrandName = brandName.trim();
-  const trimmedRegion = region.trim();
-  const isSearchInfoReady = Boolean(trimmedBrandName) && Boolean(trimmedRegion);
+  const trimmedStoreName = storeName.trim();
+  const trimmedStoreAddress = storeAddress.trim();
+  const isSearchInfoReady = Boolean(trimmedStoreName) && Boolean(trimmedStoreAddress);
   const isGenerateDisabled = isGenerating || !notes || (enableSearch && !isSearchInfoReady);
 
   // 사용자 플랜 정보 가져오기
@@ -178,6 +196,34 @@ function StudioPageContent() {
       setUserPlan('FREE');
     }
   }, [status, session]);
+
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    const fetchStoreProfile = async () => {
+      try {
+        const res = await fetch('/api/user/store-profile');
+        if (!res.ok) return;
+        const data = await res.json();
+        const profile = data?.profile as StoreProfile | null;
+        if (!profile) return;
+
+        setHasSavedStoreProfile(true);
+        setStoreName(profile.storeName || '');
+        setStoreAddress(profile.storeAddress || '');
+        const menuText =
+          profile.storeMenu?.map((m) => (m.price ? `${m.name} ${m.price}원` : m.name)).filter(Boolean).join(' / ') || '';
+        setStoreMenu(menuText);
+        setStoreHours(
+          [profile.storeHours, profile.storeOffDay ? `휴무: ${profile.storeOffDay}` : ''].filter(Boolean).join(' / ')
+        );
+        setStoreFeature([profile.storeFeature, profile.storeIntro].filter(Boolean).join(' / '));
+        if (profile.storeLink) setLink(profile.storeLink);
+      } catch (e) {
+        console.error('Failed to fetch store profile:', e);
+      }
+    };
+    void fetchStoreProfile();
+  }, [status]);
 
   // 모든 사용자가 7가지 업종 모두 사용 가능 (요금제는 생성 횟수만 제한)
   const availableDomains = useMemo(() => {
@@ -391,7 +437,7 @@ function StudioPageContent() {
     }
 
     if (enableSearch && !isSearchInfoReady) {
-      const warnMsg = '기존 콘텐츠 조사를 사용하려면 업체명과 지역을 입력해주세요.';
+      const warnMsg = '기존 콘텐츠 조사를 사용하려면 상호명과 주소/위치를 입력해주세요.';
       setError(warnMsg);
       setToast({ message: warnMsg, type: 'error' });
       return;
@@ -414,8 +460,11 @@ function StudioPageContent() {
       }
       formData.append('domainId', domainId);
       formData.append('platformId', platformId);
-      if (trimmedBrandName) formData.append('brandName', trimmedBrandName);
-      if (trimmedRegion) formData.append('region', trimmedRegion);
+      if (trimmedStoreName) formData.append('storeName', trimmedStoreName);
+      if (trimmedStoreAddress) formData.append('storeAddress', trimmedStoreAddress);
+      if (storeMenu.trim()) formData.append('storeMenu', storeMenu.trim());
+      if (storeHours.trim()) formData.append('storeHours', storeHours.trim());
+      if (storeFeature.trim()) formData.append('storeFeature', storeFeature.trim());
       if (link) formData.append('link', link);
       if (voiceHints) {
         voiceHints.split(',').map(h => h.trim()).filter(h => h).forEach(hint => {
@@ -742,8 +791,8 @@ function StudioPageContent() {
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder={MEMO_PLACEHOLDERS[domainId] || MEMO_PLACEHOLDERS.food}
-                  rows={5}
+                  placeholder={'오늘 강조할 포인트를 입력하세요\n예: 7가지 버섯과 매일 삶는 아롱사태 / 가족모임 추천 / 이번 주 런치 특선'}
+                  rows={7}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-primary focus:border-transparent resize-none text-base text-gray-900 placeholder:text-gray-400"
                 />
                 <div className="flex items-center justify-between mt-1">
@@ -789,11 +838,11 @@ function StudioPageContent() {
                   placeholder="아롱사태전골, 점심특선, 가족외식"
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-primary focus:border-transparent text-base text-gray-900 placeholder:text-gray-400"
                 />
-                {(domainId || trimmedRegion) && (
+                {(domainId || trimmedStoreAddress) && (
                   <div className="mt-2">
                     <p className="text-xs text-gray-500 mb-2">추천 태그 (클릭하여 추가)</p>
                     <div className="flex flex-wrap gap-2">
-                      {getRecommendedKeywords(domainId, trimmedRegion).map((tag) => {
+                      {getRecommendedKeywords(domainId, trimmedStoreAddress).map((tag) => {
                         const currentTags = keywords.split(',').map((k) => k.trim()).filter(Boolean);
                         const isAdded = currentTags.includes(tag);
                         return (
@@ -916,7 +965,7 @@ function StudioPageContent() {
                 </label>
               {enableSearch && !isSearchInfoReady && (
                 <p className="mt-2 text-xs text-red-500">
-                  업체명과 지역을 입력해야 정확한 조사가 가능합니다.
+                  상호명과 주소/위치를 입력해야 정확한 조사가 가능합니다.
                 </p>
               )}
               </div>
@@ -963,38 +1012,81 @@ function StudioPageContent() {
               {/* 추가 설정 */}
               <details className="mb-6" open>
                 <summary className="cursor-pointer text-sm font-medium text-gray-700 mb-3">
-                  추가 설정 (브랜드 정보, 지역 등)
+                  추가 설정 (매장 기본 정보)
                 </summary>
                 <div className="space-y-4 mt-4">
+                  {hasSavedStoreProfile && (
+                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={overrideStoreInfo}
+                        onChange={(e) => setOverrideStoreInfo(e.target.checked)}
+                        className="w-4 h-4 text-brand-primary rounded focus:ring-brand-primary"
+                      />
+                      이번 글만 다르게 입력
+                    </label>
+                  )}
                   <input
                     type="text"
-                    value={brandName}
-                    onChange={(e) => setBrandName(e.target.value)}
-                    placeholder="브랜드 이름"
+                    value={storeName}
+                    onChange={(e) => setStoreName(e.target.value)}
+                    placeholder="예: 아롱하다"
+                    disabled={hasSavedStoreProfile && !overrideStoreInfo}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent text-base text-gray-900 placeholder:text-gray-400"
                   />
-                  {enableSearch && !trimmedBrandName && (
+                  <p className="text-xs text-gray-500 -mt-2">상호명</p>
+                  {enableSearch && !trimmedStoreName && (
                     <p className="text-xs text-red-500">
-                      기존 콘텐츠 조사를 위해 브랜드/업체 이름을 입력해주세요.
+                      기존 콘텐츠 조사를 위해 상호명을 입력해주세요.
                     </p>
                   )}
                   <input
                     type="text"
-                    value={region}
-                    onChange={(e) => setRegion(e.target.value)}
-                    placeholder="지역 (예: 강남구)"
+                    value={storeAddress}
+                    onChange={(e) => setStoreAddress(e.target.value)}
+                    placeholder="예: 창원 의창구 도계동 OO번지 (OO 근처)"
+                    disabled={hasSavedStoreProfile && !overrideStoreInfo}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent text-base text-gray-900 placeholder:text-gray-400"
                   />
-                  {enableSearch && !trimmedRegion && (
+                  <p className="text-xs text-gray-500 -mt-2">주소 및 위치</p>
+                  {enableSearch && !trimmedStoreAddress && (
                     <p className="text-xs text-red-500">
-                      기존 콘텐츠 조사를 위해 도시/지역 정보를 입력해주세요.
+                      기존 콘텐츠 조사를 위해 주소/위치 정보를 입력해주세요.
                     </p>
                   )}
+                  <input
+                    type="text"
+                    value={storeMenu}
+                    onChange={(e) => setStoreMenu(e.target.value)}
+                    placeholder="예: 아롱사태수육 2인 18,000원 / 명란감태주먹밥 5,000원"
+                    disabled={hasSavedStoreProfile && !overrideStoreInfo}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent text-base text-gray-900 placeholder:text-gray-400"
+                  />
+                  <p className="text-xs text-gray-500 -mt-2">대표 메뉴 및 가격</p>
+                  <input
+                    type="text"
+                    value={storeHours}
+                    onChange={(e) => setStoreHours(e.target.value)}
+                    placeholder="예: 매일 11:00~21:00 / 매주 월요일 휴무"
+                    disabled={hasSavedStoreProfile && !overrideStoreInfo}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent text-base text-gray-900 placeholder:text-gray-400"
+                  />
+                  <p className="text-xs text-gray-500 -mt-2">영업시간 및 휴무</p>
+                  <input
+                    type="text"
+                    value={storeFeature}
+                    onChange={(e) => setStoreFeature(e.target.value)}
+                    placeholder="예: 매일 오전 직접 육수 준비 / 주차 3대 가능 / 예약 가능"
+                    disabled={hasSavedStoreProfile && !overrideStoreInfo}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent text-base text-gray-900 placeholder:text-gray-400"
+                  />
+                  <p className="text-xs text-gray-500 -mt-2">가게 특징 (선택)</p>
                   <input
                     type="text"
                     value={link}
                     onChange={(e) => setLink(e.target.value)}
                     placeholder="링크 (예: 예약 페이지)"
+                    disabled={hasSavedStoreProfile && !overrideStoreInfo}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent text-base text-gray-900 placeholder:text-gray-400"
                   />
                   <input

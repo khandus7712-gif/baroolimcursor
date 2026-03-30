@@ -15,6 +15,7 @@ import { loadDomainProfile, loadPlatformTemplate } from '@/lib/profileLoader';
 import { composePrompt } from '@/lib/promptComposer';
 import { generateContent } from '@/lib/ai';
 import { runPostProcess, checkFinalSentencePunctuation } from '@/lib/postProcess';
+import { buildStoreContext } from '@/lib/storeContext';
 import { searchWeb, formatSearchResultsForPrompt, shouldSearchWeb, buildSearchQuery } from '@/lib/webSearch';
 import { getPlugins } from '@/plugins/hashtag';
 import { uploadBase64Image } from '@/lib/storage';
@@ -123,9 +124,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       keywords = String(fields.keywords).split(',').map(k => k.trim()).filter(k => k);
     }
     
-    const brandName = fields.brandName as string;
-    const region = fields.region as string;
+    const storeName = (fields.storeName as string) || (fields.brandName as string);
+    const storeAddress = (fields.storeAddress as string) || (fields.region as string);
+    const storeMenu = fields.storeMenu as string;
+    const storeHours = fields.storeHours as string;
+    const storeFeature = fields.storeFeature as string;
+    const storePhone = fields.storePhone as string;
+    const storeOffDay = fields.storeOffDay as string;
+    const storeIntro = fields.storeIntro as string;
+    const storeLink = fields.storeLink as string;
     const link = fields.link as string;
+
     
     // voiceHints 처리: 배열이면 그대로 사용, 문자열이면 split
     let voiceHints: string[] = [];
@@ -174,6 +183,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 5. 도메인 및 플랫폼 프로필 로드
     let domainProfile = loadDomainProfile(domainId);
     const platformTemplate = loadPlatformTemplate(platformId);
+    const savedStoreProfile = await prisma.storeProfile.findUnique({
+      where: { userId },
+    });
+
+    const mergedStoreProfile = {
+      storeName: storeName || savedStoreProfile?.storeName || undefined,
+      storeAddress: storeAddress || savedStoreProfile?.storeAddress || undefined,
+      storePhone: storePhone || savedStoreProfile?.storePhone || undefined,
+      storeHours: storeHours || savedStoreProfile?.storeHours || undefined,
+      storeOffDay: storeOffDay || savedStoreProfile?.storeOffDay || undefined,
+      storeMenu:
+        storeMenu && storeMenu.trim()
+          ? [{ name: storeMenu.trim() }]
+          : ((savedStoreProfile?.storeMenu as { name: string; price?: number }[] | null) || undefined),
+      storeFeature: storeFeature || savedStoreProfile?.storeFeature || undefined,
+      storeIntro: storeIntro || savedStoreProfile?.storeIntro || undefined,
+      storeLink: storeLink || savedStoreProfile?.storeLink || undefined,
+    };
+    const storeContext = buildStoreContext(mergedStoreProfile);
+    const notesWithStoreInfo = storeContext ? `${notes}\n\n${storeContext}` : notes;
 
     // 5-1. 온보딩에서 저장한 사용자 설정(domainConfig) 주입
     // - CTA(전화/카카오) 자동 삽입용 연락처 정보 수집
@@ -220,9 +249,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // 7. 웹 검색 (선택사항)
     let searchContext: string | undefined;
-    if (enableSearch && brandName && region) {
+    if (enableSearch && mergedStoreProfile.storeName && mergedStoreProfile.storeAddress) {
       try {
-        const searchQuery = buildSearchQuery(notes, keywords, domainId, brandName, region);
+        const searchQuery = buildSearchQuery(
+          notesWithStoreInfo,
+          keywords,
+          domainId,
+          mergedStoreProfile.storeName,
+          mergedStoreProfile.storeAddress
+        );
         if (shouldSearchWeb(notes, keywords)) {
           const searchResults = await searchWeb({
             query: searchQuery,
@@ -245,17 +280,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const prompt = composePrompt({
       domain: domainProfile,
       platform: platformTemplate,
-      brand: brandName ? {
-        name: brandName,
+      brand: mergedStoreProfile.storeName ? {
+        name: mergedStoreProfile.storeName,
         tone: voiceHints.join(', '),
         keywords,
         voiceHints,
       } : undefined,
       plugins: pluginInstances,
       content: {
-        notes,
+        notes: notesWithStoreInfo,
         keywords,
-        region,
+        region: mergedStoreProfile.storeAddress,
         link,
       },
       searchContext,
@@ -270,7 +305,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let processed = await runPostProcess(generatedText, {
       domain: domainProfile,
       platform: platformTemplate,
-      region,
+      region: mergedStoreProfile.storeAddress,
       keywords,
     });
 
@@ -288,7 +323,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           const retryProcessed = await runPostProcess(retryGeneratedText, {
             domain: domainProfile,
             platform: platformTemplate,
-            region,
+            region: storeAddress,
             keywords,
           });
 
@@ -320,8 +355,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           input: {
             notes,
             keywords,
-            brandName,
-            region,
+            storeName: mergedStoreProfile.storeName,
+            storeAddress: mergedStoreProfile.storeAddress,
+            storeMenu: mergedStoreProfile.storeMenu,
+            storeHours: mergedStoreProfile.storeHours,
+            storeOffDay: mergedStoreProfile.storeOffDay,
+            storePhone: mergedStoreProfile.storePhone,
+            storeFeature: mergedStoreProfile.storeFeature,
+            storeIntro: mergedStoreProfile.storeIntro,
+            storeLink: mergedStoreProfile.storeLink,
             link,
             plugins,
             enableSearch,

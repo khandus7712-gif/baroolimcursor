@@ -103,15 +103,6 @@ export default function HomePage() {
           {/* 데스크톱 메뉴 */}
           <div className="hidden lg:flex items-center gap-4">
             <button
-              onClick={() => router.push('/waitlist')}
-              className="text-white/80 hover:text-white transition-colors px-4 py-2 font-medium relative group"
-            >
-              <span className="relative">
-                🎉 사전예약
-                <span className="absolute -top-1 -right-6 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full animate-pulse">NEW</span>
-              </span>
-            </button>
-            <button
               onClick={() => router.push('/pricing')}
               className="text-white/80 hover:text-white transition-colors px-4 py-2 font-medium"
             >
@@ -144,13 +135,26 @@ export default function HomePage() {
                   <User className="w-4 h-4" />
                   <span>{session.user?.name || session.user?.email?.split('@')[0]}</span>
                   {remainingCount !== null && (
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                      remainingCount <= 1 ? 'bg-red-500/20 text-red-300' :
-                      remainingCount <= 3 ? 'bg-yellow-500/20 text-yellow-300' :
-                      'bg-green-500/20 text-green-300'
-                    }`}>
-                      {remainingCount}회 남음
-                    </span>
+                    userProfile?.plan === 'FREE' && remainingCount === 0 ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push('/pricing');
+                        }}
+                        className="px-2 py-1 rounded-full text-xs font-bold bg-brand-neon-purple/20 text-brand-neon-purple hover:bg-brand-neon-purple/30 transition-colors"
+                      >
+                        🚀 무료 체험 완료 → 업그레이드
+                      </button>
+                    ) : (
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                        remainingCount <= 1 ? 'bg-red-500/20 text-red-300' :
+                        remainingCount <= 3 ? 'bg-yellow-500/20 text-yellow-300' :
+                        'bg-green-500/20 text-green-300'
+                      }`}>
+                        {remainingCount}회 남음
+                      </span>
+                    )
                   )}
                 </button>
                 <button
@@ -211,13 +215,6 @@ export default function HomePage() {
           <div className="lg:hidden bg-black/95 backdrop-blur-xl border-t border-white/10">
             <div className="max-w-7xl mx-auto px-4 py-4 space-y-2">
               <button
-                onClick={() => { router.push('/waitlist'); setMobileMenuOpen(false); }}
-                className="w-full text-left px-4 py-3 hover:bg-white/10 rounded-lg transition-colors text-white font-medium flex items-center justify-between"
-              >
-                <span>🎉 사전예약</span>
-                <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">NEW</span>
-              </button>
-              <button
                 onClick={() => { router.push('/pricing'); setMobileMenuOpen(false); }}
                 className="w-full text-left px-4 py-3 hover:bg-white/10 rounded-lg transition-colors text-white font-medium"
               >
@@ -242,13 +239,27 @@ export default function HomePage() {
                       <span className="text-sm">{session.user?.name || session.user?.email?.split('@')[0]}</span>
                     </div>
                     {remainingCount !== null && (
-                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                        remainingCount <= 1 ? 'bg-red-500/20 text-red-300' :
-                        remainingCount <= 3 ? 'bg-yellow-500/20 text-yellow-300' :
-                        'bg-green-500/20 text-green-300'
-                      }`}>
-                        {remainingCount}회
-                      </span>
+                      userProfile?.plan === 'FREE' && remainingCount === 0 ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push('/pricing');
+                            setMobileMenuOpen(false);
+                          }}
+                          className="px-2 py-1 rounded-full text-xs font-bold bg-brand-neon-purple/20 text-brand-neon-purple hover:bg-brand-neon-purple/30 transition-colors"
+                        >
+                          🚀 무료 체험 완료 → 업그레이드
+                        </button>
+                      ) : (
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                          remainingCount <= 1 ? 'bg-red-500/20 text-red-300' :
+                          remainingCount <= 3 ? 'bg-yellow-500/20 text-yellow-300' :
+                          'bg-green-500/20 text-green-300'
+                        }`}>
+                          {remainingCount}회
+                        </span>
+                      )
                     )}
                   </button>
                   <button
@@ -553,14 +564,6 @@ export default function HomePage() {
                 <ArrowRight className="w-6 h-6 sm:w-8 sm:h-8" />
               </button>
               
-              <button
-                onClick={() => router.push('/waitlist')}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 sm:gap-3 bg-white/10 backdrop-blur-sm border-2 border-brand-neon-purple px-8 sm:px-12 py-4 sm:py-6 rounded-2xl text-lg sm:text-xl font-black text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 relative group"
-              >
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">특별혜택</span>
-                <Sparkles className="w-6 h-6 sm:w-8 sm:h-8" />
-                <span>사전예약하기</span>
-              </button>
             </div>
           </div>
         </div>
@@ -590,11 +593,6 @@ export default function HomePage() {
                 <li>
                   <button onClick={() => router.push('/studio')} className="hover:text-white transition-colors">
                     콘텐츠 생성
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => router.push('/scheduled')} className="hover:text-white transition-colors">
-                    예약 관리
                   </button>
                 </li>
                 <li>

@@ -26,21 +26,18 @@ const TEST_ACCOUNTS = [
     email: 'test@baroolim.com',
     password: 'test1234',
     name: '테스트 사용자',
-    id: 'test-user-1',
   },
   {
     email: 'payment@baroolim.com',
     password: 'payment1234',
     name: '결제 테스트',
-    id: 'test-user-payment',
   },
   {
     email: 'admin@baroolim.com',
     password: 'admin1234',
     name: '관리자',
-    id: 'admin-user',
   },
-] as const;
+];
 
 // 환경변수 체크
 if (!process.env.NEXTAUTH_SECRET) {
@@ -102,7 +99,8 @@ export const authOptions: NextAuthOptions = {
           );
 
           if (testAccount) {
-            let userId = testAccount.id;
+            // ✅ string 타입 명시로 타입 에러 해결
+            let userId: string = '';
 
             try {
               const existing = await prisma.user.findUnique({
@@ -120,11 +118,13 @@ export const authOptions: NextAuthOptions = {
                   },
                 });
                 userId = newUser.id;
+                console.log('✅ [AUTH] 테스트 계정 DB 생성:', userId);
               } else {
                 userId = existing.id;
               }
             } catch (err) {
               console.error('🔴 [AUTH] 테스트 계정 DB 처리 실패:', err);
+              userId = `test-${testAccount.email}`;
             }
 
             return {
@@ -211,7 +211,6 @@ export const authOptions: NextAuthOptions = {
      */
     async jwt({ token, user, account }) {
       if (user) {
-        // DB에서 실제 사용자 ID 조회
         if (user.email) {
           try {
             const dbUser = await prisma.user.findUnique({
